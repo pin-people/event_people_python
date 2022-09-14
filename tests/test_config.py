@@ -6,26 +6,6 @@ from src.config import Settings
 import pytest
 from mock import patch
 import pytest
-from decouple import Config, RepositoryEnv
-from io import StringIO
-
-
-
-ENVFILE = '''
-
-RABBIT_URL = amqp://guest:guest@localhost:5672
-RABBIT_EVENT_PEOPLE_APP_NAME = service_name
-RABBIT_EVENT_PEOPLE_VHOST = event_people
-RABBIT_EVENT_PEOPLE_TOPIC_NAME = event_people
-
-
-'''
-
-
-@pytest.fixture(scope='module')
-def config():
-    with patch('decouple.open', return_value=StringIO(ENVFILE), create=True):
-        return Config(RepositoryEnv('.env'))
 
 def test_env_exists(config):
     with patch('src.config.config',config) as c:
