@@ -10,7 +10,7 @@ def adjust_name_event(name):
 
     Returns:
         _type_: _description_
-    """    
+    """
     if not name or len(name.split('.')) < 3:
             raise ValueError("pattern argument error in event's name")
 
