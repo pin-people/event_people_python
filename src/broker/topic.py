@@ -17,11 +17,15 @@ class Topic:
         if isinstance(events, list):
             for event in events:
                 self.channel.basic_publish(
-                    exchange='topic_logs', routing_key=event.name, body=event.payload())
+                    exchange=config.EVENT_PEOPLE_TOPIC_NAME, routing_key=event.name, body=event.payload())
 
                 print(" [x] Sent %r:%r" % (event.name, event.payload()))
         elif isinstance(events, Event):
+                queue_name = self.queue_name(events.name)
                 self.channel.basic_publish(
-                    exchange='topic_logs', routing_key=events.name, body=events.payload())
+                    exchange=config.EVENT_PEOPLE_TOPIC_NAME, routing_key=events.name, body=events.payload())
 
                 print(" [x] Sent %r:%r" % (events.name, events.payload()))
+
+    def queue_name(self, routing_key) -> str:
+        return f'{config.EVENT_PEOPLE_APP_NAME}-{routing_key}'
