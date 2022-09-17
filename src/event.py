@@ -41,4 +41,4 @@ class Event(object):
         return f'{name}.all' if  3 <= len(name.split('.')) < 4 else name
 
     def payload(self):
-       return json.dumps({"header": str(self.header), "body": str(self.body)})
+       return json.dumps({"header": dict(self.header), "body": dict(self.body)})

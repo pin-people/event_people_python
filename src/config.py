@@ -10,7 +10,7 @@ class Settings(BaseSettings):
         cls.EVENT_PEOPLE_APP_NAME: str = config('RABBIT_EVENT_PEOPLE_APP_NAME')
         cls.EVENT_PEOPLE_TOPIC_NAME: str = config('RABBIT_EVENT_PEOPLE_TOPIC_NAME')
         cls.EVENT_PEOPLE_RABBIT_URL: str = config('RABBIT_URL')
-        cls.EVENT_PEOPLE_VHOST: str = config('RABBIT_EVENT_PEOPLE_VHOST')
+        cls.EVENT_PEOPLE_VHOST: str = config('RABBIT_EVENT_PEOPLE_VHOST', '')
         return super().__new__(cls)
 
 
