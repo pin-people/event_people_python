@@ -1,4 +1,4 @@
-from src.broker.rabbit import Rabbit
+from event_people.broker.rabbit import Rabbit
 
 class Emitter:
 

@@ -1,33 +1,44 @@
-from multiprocessing import Event
-from unittest import mock
-from mock import patch
 import pika
+import pytest
+import os
+
+from multiprocessing import Event
+from mock import patch
 
 from event_people.config import Settings
 from event_people.event import Event
 
-@patch('src.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection)
-def test_emitter_with_one_event(mocked_connection, config):
-    mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-    mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
+class TestEmmitter:
 
-    with patch('src.config.config',config) as c:
-        s = Settings()
-        with patch('src.broker.queue.get_settings', s):
+    @pytest.fixture()
+    def setUp(self):
+        print("setup")
+        os.environ["RABBIT_URL"] = "amqp://guest:guest@localhost:5672"
+        os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
+        os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+        os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
+
+        yield "resource"
+        print("teardown")
+
+
+    def test_emitter_with_one_event(self, setUp):
+        with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+            mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+            mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
+
             from event_people.emitter import Emitter
             body = {'text': 'meu chefe é legal!'}
             e = Event(body=body, name='resource.origin.action')
             Emitter.trigger(e)
 
 
-@patch('src.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection)
-def test_emitter_with_multiple_event(mocked_connection, config):
-    mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-    mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
+    def test_emitter_with_multiple_event(self, setUp):
+        with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
 
-    with patch('src.config.config',config) as c:
-        s = Settings()
-        with patch('src.broker.queue.get_settings', s):
+            mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+            mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
+
             from event_people.emitter import Emitter
             events = []
 

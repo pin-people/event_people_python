@@ -1,38 +1,53 @@
 import pytest
 import pika
 from mock import patch
+import os
 
-@patch('src.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection)
-def test_rabbit_close_connection(mocked_connection):
-    from src.broker.rabbit import Rabbit
+class TestRabbit:
 
-    with Rabbit() as r:
-        mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-        r.close()
-        assert r
+    @pytest.fixture()
+    def setUp(self):
+        print("setup")
+        os.environ["RABBIT_URL"] = "amqp://guest:guest@localhost:5672"
+        os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
+        os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+        os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
 
-@patch('src.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection)
-def test_rabbit_consume_queue(mocked_connection):
-    from src.broker.rabbit import Rabbit
+        yield "resource"
+        print("teardown")
 
-    with Rabbit() as r:
-        mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-        r.consume('user.users.create.all', callback=None)
+    def test_rabbit_close_connection(self, setUp):
+        with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+            from event_people.broker.rabbit import Rabbit
+
+            with Rabbit() as r:
+                mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+                r.close()
+                assert r
+
+    def test_rabbit_consume_queue(self, setUp):
+        with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+            from event_people.broker.rabbit import Rabbit
+
+            with Rabbit() as r:
+                mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+                r.consume('user.users.create.all', callback=None)
 
 
-@patch('src.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection)
-def test_rabbit_consume_without_parameters(mocked_connection):
-    with pytest.raises(TypeError):
-        from src.broker.rabbit import Rabbit
-        with Rabbit() as r:
-            mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-            r.consume()
+    def test_rabbit_consume_without_parameters(self, setUp):
+        with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+            with pytest.raises(TypeError):
+                from event_people.broker.rabbit import Rabbit
+                with Rabbit() as r:
+                    mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+                    r.consume()
 
 
-@patch('src.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection)
-def test_rabbit_emmit_event_sucessfully(mocked_connection):
-    from src.broker.rabbit import Rabbit
+    def test_rabbit_emmit_event_sucessfully(self, setUp):
+        from event_people.broker.rabbit import Rabbit
 
-    with Rabbit() as r:
-        mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-        ##todo
+        with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+
+            with Rabbit() as r:
+                mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+                ##todo

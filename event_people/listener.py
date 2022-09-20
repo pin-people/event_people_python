@@ -1,9 +1,9 @@
 from typing import Callable
 import json
 
-from src.utils import adjust_name_event
-from src.broker.rabbit import Rabbit
-from src.event import Event
+from event_people.utils import adjust_name_event
+from event_people.broker.rabbit import Rabbit
+from event_people.event import Event
 
 class Listener:
 

@@ -1,16 +1,17 @@
 from event_people.config import get_settings
 from event_people.utils import adjust_name_event
 
+config = get_settings
+
 class Queue:
 
     """ Queue wrappper for python user"""
     def __init__(self, channel):
-        self.config = get_settings()
         if channel is None:
             raise ValueError("Channel can't be None")
 
         self.channel = channel
-        self.channel.exchange_declare(exchange=self.config.EVENT_PEOPLE_TOPIC_NAME, exchange_type='topic')
+        self.channel.exchange_declare(exchange=config().EVENT_PEOPLE_TOPIC_NAME, exchange_type='topic')
 
     def subscribe(self, binding_key):
 
@@ -19,7 +20,7 @@ class Queue:
         self.channel.queue_declare(name_queue, exclusive=True)
 
         self.channel.queue_bind(
-                exchange=self.config.EVENT_PEOPLE_TOPIC_NAME, queue=name_queue, routing_key=routing_key)
+                exchange=config().EVENT_PEOPLE_TOPIC_NAME, queue=name_queue, routing_key=routing_key)
 
     def start(self, event_name, callback):
         print(' [*] Waiting for logs. To exit press CTRL+C')
@@ -30,5 +31,5 @@ class Queue:
 
 
     def queue_name(self, routing_key) -> str:
-        return f'{self.config.EVENT_PEOPLE_APP_NAME}-{routing_key}'
+        return f'{config().EVENT_PEOPLE_APP_NAME}-{routing_key}'
 

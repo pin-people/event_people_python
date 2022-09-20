@@ -1,10 +1,10 @@
 import pytest
 from mock import patch
-import pytest
 from decouple import Config, RepositoryEnv
 from io import StringIO
-
-from src.config import Settings
+import os
+import pika
+from event_people.config import Settings
 
 ENVFILE = '''
 
@@ -24,6 +24,18 @@ def config():
 
 @pytest.fixture(scope='module')
 def settings(config):
-    with patch('src.config.config',config) as c:
+    with patch('event_people.config.config',config) as c:
         s = Settings()
         return s
+
+@pytest.fixture(scope='module')
+def mock_connection():
+    os.environ["RABBIT_URL"] = "amqp://guest:guest@localhost:5672"
+    os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
+    os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+    os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
+
+    with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+        mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+        mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
+        return mock_connection

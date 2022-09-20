@@ -6,11 +6,9 @@ from event_people.broker.queue import Queue
 from event_people.event import Event
 from event_people.broker.topic import Topic
 
-class Rabbit(Base):
+config = get_settings
 
-    def __new__(cls):
-        cls.config = get_settings()
-        return Base.__new__(cls)
+class Rabbit(Base):
 
     def __init__(self) -> None:
         self.connection = None
@@ -18,7 +16,7 @@ class Rabbit(Base):
 
     def __enter__(self):
         self.connection = pika.BlockingConnection(
-                pika.URLParameters(f'{self.config.EVENT_PEOPLE_RABBIT_URL}/{self.config.EVENT_PEOPLE_VHOST}'))
+                pika.URLParameters(f'{config().EVENT_PEOPLE_RABBIT_URL}/{config().EVENT_PEOPLE_VHOST}'))
         self.channel = self.connection.channel()
         return self
 

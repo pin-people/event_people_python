@@ -1,0 +1,26 @@
+#!/usr/bin/env python
+
+import sys
+import os
+
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from event_people.emitter import Emitter
+from event_people.event import Event
+
+os.environ["RABBIT_URL"] = "amqp://guest:guest@localhost:5672"
+os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
+os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
+
+events = []
+
+body = {'text': 'meu chefe é legal'}
+e1 = Event(name='resource.origin.action', body=body, appName='EventPeopleExampleApp')
+events.append(e1)
+
+body= {'text': 'a empresa que eu trabalho é ótima'}
+e2 = Event(name='resource.origin1.action2', body=body, appName='EventPeopleExampleApp')
+events.append(e2)
+
+Emitter.trigger(events)
