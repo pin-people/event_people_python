@@ -2,7 +2,7 @@ import pytest
 import json
 from pydantic.error_wrappers import ValidationError
 from typing import Dict
-from src.event import Header, Event, Body
+from event_people.event import Header, Event, Body
 
 def test_event_with_no_header():
    with pytest.raises(ValidationError):

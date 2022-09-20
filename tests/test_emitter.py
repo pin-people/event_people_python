@@ -3,8 +3,8 @@ from unittest import mock
 from mock import patch
 import pika
 
-from src.config import Settings
-from src.event import Event
+from event_people.config import Settings
+from event_people.event import Event
 
 @patch('src.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection)
 def test_emitter_with_one_event(mocked_connection, config):
@@ -14,7 +14,7 @@ def test_emitter_with_one_event(mocked_connection, config):
     with patch('src.config.config',config) as c:
         s = Settings()
         with patch('src.broker.queue.get_settings', s):
-            from src.emitter import Emitter
+            from event_people.emitter import Emitter
             body = {'text': 'meu chefe é legal!'}
             e = Event(body=body, name='resource.origin.action')
             Emitter.trigger(e)
@@ -28,7 +28,7 @@ def test_emitter_with_multiple_event(mocked_connection, config):
     with patch('src.config.config',config) as c:
         s = Settings()
         with patch('src.broker.queue.get_settings', s):
-            from src.emitter import Emitter
+            from event_people.emitter import Emitter
             events = []
 
             body1 = {'text': 'meu chefe é legal!'}
