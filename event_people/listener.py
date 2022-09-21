@@ -25,6 +25,7 @@ class Listener:
         header = json_message['header']
         name = header['resource'] + '.' + header['origin'] +  '.'  + header['action'] + '.' + header['destiny']
         self.result = Event(appName=header['app'], name=name ,body=json_message['body'])
+        ch.basic_ack(delivery_tag= method.delivery_tag)
 
 
     def get_result(self):

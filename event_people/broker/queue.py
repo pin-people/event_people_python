@@ -26,7 +26,7 @@ class Queue:
         print(' [*] Waiting for logs. To exit press CTRL+C')
         queue_name = self.queue_name(event_name)
         self.channel.basic_consume(
-            queue=queue_name, on_message_callback=callback, auto_ack=True)
+            queue=queue_name, on_message_callback=callback)
         self.channel.start_consuming()
 
 
