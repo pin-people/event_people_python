@@ -13,7 +13,7 @@ os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
 os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
 os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
 
-
+result = None
 def callback_test(ch, method, properties, body) -> Event:
         print(" [x] %r:%r" % (method.routing_key, body))
         json_message = json.loads(body)
@@ -23,6 +23,4 @@ def callback_test(ch, method, properties, body) -> Event:
         ch.basic_ack(delivery_tag= method.delivery_tag)
 
 
-l = Listener.on(callback_test, 'resource.origin.action.all')
-
-
+Listener.on(callback_test,'resource.origin.action.all', 'resource.origin1.action2.all')

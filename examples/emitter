@@ -14,6 +14,6 @@ os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
 
 
 body = {'text': 'meu chefe é legal'}
-e1 = Event(name='resource.origin.action', body=body, appName='EventPeopleExampleApp')
+e1 = Event(name='resource.origin.action.all', body=body, appName='EventPeopleExampleApp')
 
 Emitter.trigger(e1)

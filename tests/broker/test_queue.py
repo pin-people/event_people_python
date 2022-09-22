@@ -44,10 +44,9 @@ class TestQueue:
             mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
             mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
 
-            with pytest.raises(TypeError):
-                from event_people.broker.queue import Queue
-                q = Queue(mocked_connection.channel)
-                q.subscribe()
+            from event_people.broker.queue import Queue
+            q = Queue(mocked_connection.channel)
+            q.subscribe()
 
 
     def test_queue_with_start_consume(self, setUp):
@@ -59,4 +58,4 @@ class TestQueue:
             from event_people.broker.queue import Queue
             q = Queue(mocked_connection.channel)
             q.subscribe('resource.origin.action')
-            q.start('resource.origin.action', None)
+            q.start(None, 'resource.origin.action')

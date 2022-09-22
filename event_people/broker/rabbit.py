@@ -1,10 +1,13 @@
 import pika
+import functools
+import asyncio
 from event_people.broker.base import Base
 from event_people.config import get_settings
 
 from event_people.broker.queue import Queue
 from event_people.event import Event
 from event_people.broker.topic import Topic
+import asyncio
 
 config = get_settings
 
@@ -20,10 +23,12 @@ class Rabbit(Base):
         self.channel = self.connection.channel()
         return self
 
-    def consume(self, event_name, callback=None):
+    def consume(self,callback=None, *event_name):
         q = Queue(self.channel)
-        q.subscribe(binding_key=event_name)
-        q.start(event_name, callback)
+        q.subscribe(*event_name)
+        q.start(callback, *event_name)
+        print(' [*] Waiting for logs. To exit press CTRL+C')
+        self.channel.start_consuming()
 
     def producer(self, events):
         t = Topic(self.channel)

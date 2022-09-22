@@ -1,6 +1,5 @@
 # EventPeople
 
-[![CircleCI](https://dl.circleci.com/status-badge/img/gh/pin-people/event_people_ruby/tree/main.svg?style=svg)](https://dl.circleci.com/status-badge/redirect/gh/pin-people/event_people_ruby/tree/main)
 
 EventPeople is a tool to simplify the communication of services based on events. It is an extension of the [Pika](https://github.com/pika/pika) library.
 
@@ -91,129 +90,54 @@ Other important aspect of event consumming is the result of the processing we pr
 
 Given you want to consume a single event inside your project you can use the `EventPeople::Listener.on` method. It consumes a single event, given there are events available to be consumed with the given name pattern.
 
-```ruby
-require 'event_people'
+```python
+from event_people.listener import Listener
+from event_people.event import Event
 
-# 3 words event names will be replaced by its 4 word wildcard
-# counterpart: 'payment.payments.pay.all'
-event_name = 'payment.payments.pay'
+os.environ["RABBIT_URL"] = "amqp://guest:guest@localhost:5672"
+os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
+os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
 
-EventPeople::Listener.on(event_name) do |event, _delivery_info|
-  puts ""
-  puts "  - Received the "#{event.name}" message from #{event.origin}:"
-  puts "     Message: #{event.body}"
-  puts ""
-  success!
-end
 
-EventPeople::Config.broker.close_connection
+def callback_test(ch, method, properties, body) -> Event:
+        print(" [x] %r:%r" % (method.routing_key, body))
+        json_message = json.loads(body)
+        header = json_message['header']
+        name = header['resource'] + '.' + header['origin'] +  '.'  + header['action'] + '.' + header['destiny']
+        result = Event(appName=header['app'], name=name ,body=json_message['body'])
+        ch.basic_ack(delivery_tag= method.delivery_tag)
+
+
+l = Listener.on(callback_test, 'resource.origin.action.all')
 ```
 
-You can also receive all available messages using a loop:
+You can also receive listen (consume) messagem from more than one queues
 
-```ruby
-require 'event_people'
+```python
+from event_people.listener import Listener
+from event_people.event import Event
 
-event_name = 'payment.payments.pay.all'
-has_events = true
+os.environ["RABBIT_URL"] = "amqp://guest:guest@localhost:5672"
+os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
+os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'topic1'
 
-while has_events do
-  has_events = false
+result = None
+def callback_test(ch, method, properties, body) -> Event:
+        print(" [x] %r:%r" % (method.routing_key, body))
+        json_message = json.loads(body)
+        header = json_message['header']
+        name = header['resource'] + '.' + header['origin'] +  '.'  + header['action'] + '.' + header['destiny']
+        result = Event(appName=header['app'], name=name ,body=json_message['body'])
+        ch.basic_ack(delivery_tag= method.delivery_tag)
 
-  EventPeople::Listener.on(event_name) do |event, _delivery_info|
-    has_events = true
-    puts ""
-    puts "  - Received the "#{event.name}" message from #{event.origin}:"
-    puts "     Message: #{event.body}"
-    puts ""
-    success!
-  end
-end
 
-EventPeople::Config.broker.close_connection
+Listener.on(callback_test,'resource.origin.action.all', 'resource.origin1.action2.all')
+
 ```
-[See more details](https://github.com/pin-people/event_people_ruby/blob/master/examples/listener.rb)
+[See more details](https://github.com/pin-people/event_people_python/blob/master/examples/listener_multiple_events)
 
-#### Multiple events routing
-
-If your project needs to handle lots of events you can extend `EventPeople::Listeners::Base` class to bind how many events you need to instance methods, so whenever an event is received the method will be called automatically.
-
-```ruby
-require 'event_people'
-
-class CustomEventListener < EventPeople::Listeners::Base
-  bind :pay, 'resource.custom.pay'
-  bind :receive, 'resource.custom.receive'
-  bind :private_channel, 'resource.custom.private.service'
-
-  def pay(event)
-    puts "Paid #{event.body['amount']} for #{event.body['name']} ~> #{event.name}"
-
-    success!
-  end
-
-  def receive(event)
-    if event.body['amount'] > 500
-      puts "Received #{event.body['amount']} from #{event.body['name']} ~> #{event.name}"
-    else
-      puts '[consumer] Got SKIPPED message'
-      return reject!
-    end
-
-    success!
-  end
-
-  def private_channel(event)
-    puts "[consumer] Got a private message: \"#{event.body['message']}\" ~> #{event.name}"
-
-    success!
-  end
-end
-```
-[See more details](https://github.com/pin-people/event_people_ruby/blob/master/examples/daemon.rb)
-
-#### Creating a Daemon
-
-If you have the need to create a deamon to consume messages on background you can use the `EventPeople::Daemon.start` to do so with ease. Just remember to define or import all the event bindings before starting the daemon.
-
-```ruby
-require 'event_people'
-
-class CustomEventListener < EventPeople::Listeners::Base
-  bind :pay, 'resource.custom.pay'
-  bind :receive, 'resource.custom.receive'
-  bind :private_channel, 'resource.custom.private.service'
-
-  def pay(event)
-    puts "Paid #{event.body['amount']} for #{event.body['name']} ~> #{event.name}"
-
-    success!
-  end
-
-  def receive(event)
-    if event.body['amount'] > 500
-      puts "Received #{event.body['amount']} from #{event.body['name']} ~> #{event.name}"
-    else
-      puts '[consumer] Got SKIPPED message'
-
-      return reject!
-    end
-
-    success!
-  end
-
-  def private_channel(event)
-    puts "[consumer] Got a private message: \"#{event.body['message']}\" ~> #{event.name}"
-
-    success!
-  end
-end
-
-puts '****************** Daemon Ready ******************'
-
-EventPeople::Daemon.start
-```
-[See more details](https://github.com/pin-people/event_people_ruby/blob/master/examples/daemon.rb)
 
 ## Development
 

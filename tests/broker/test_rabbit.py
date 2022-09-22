@@ -31,16 +31,15 @@ class TestRabbit:
 
             with Rabbit() as r:
                 mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-                r.consume('user.users.create.all', callback=None)
+                r.consume(None, 'user.users.create.all')
 
 
     def test_rabbit_consume_without_parameters(self, setUp):
         with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
-            with pytest.raises(TypeError):
-                from event_people.broker.rabbit import Rabbit
-                with Rabbit() as r:
-                    mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
-                    r.consume()
+            from event_people.broker.rabbit import Rabbit
+            with Rabbit() as r:
+                mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+                r.consume()
 
 
     def test_rabbit_emmit_event_sucessfully(self, setUp):

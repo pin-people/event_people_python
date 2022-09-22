@@ -32,21 +32,20 @@ class TestListener:
 
             from event_people.listener import Listener
 
-            Listener.on('resource.origin.action')
+            Listener.on(lambda x: x**2, 'resource.origin.action')
 
 
     def test_listener_with_no_event_name(self, setUp):
-        with pytest.raises(ValueError):
-            from event_people.listener import Listener
+        from event_people.listener import Listener
 
-            Listener.on(None, lambda x: print(x))
+        Listener.on(lambda x: print(x))
 
 
     def test_listener_with_wrong_pattern_event_name(self, setUp):
         with pytest.raises(ValueError):
                 from event_people.listener import Listener
 
-                Listener.on("wrong.test", lambda x: print(x))
+                Listener.on(lambda x: print(x), "wrong.test")
 
 
     def test_listener_with_event_parts_name_with_all(self, setUp):
@@ -56,8 +55,7 @@ class TestListener:
 
             from event_people.listener import Listener
 
-            l = Listener.on('payment.payments.pay')
-            assert l.event_name == 'payment.payments.pay.all'
+            l = Listener.on(None, 'payment.payments.pay')
 
 
     def test_listener_with_callback_none(self, setUp):
@@ -65,9 +63,7 @@ class TestListener:
             mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
             mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
             from event_people.listener import Listener
-            l = Listener.on(event_name='payment.payments.pay.all', callback=None)
-            assert l.callback is not None
-            assert l.callback.__name__ == 'callback_event'
+            l = Listener.on(None, 'payment.payments.pay.all')
 
     def test_listener_callback_not_none(self, setUp):
         with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
@@ -76,6 +72,15 @@ class TestListener:
 
             from event_people.listener import Listener
 
-            l = Listener.on(event_name='payment.payments.pay.all', callback=lambda x: print(x))
+            l = Listener.on(lambda x: print(x), 'payment.payments.pay.all' )
             assert l.callback is not None
             assert l.callback.__name__ == '<lambda>'
+
+    def test_listener_with_more_than_one_queue(self, setUp):
+            with patch('event_people.broker.rabbit.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+                mocked_connection.return_value.channel.return_value.basic_publish.return_value = False
+                mocked_connection.return_value.channel.return_value.exchange_declare.return_value = True
+
+                from event_people.listener import Listener
+
+                l = Listener.on(lambda x: print(x), 'payment.payments.pay.all', 'resource.origin.action.all' )

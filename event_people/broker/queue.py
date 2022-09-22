@@ -1,6 +1,6 @@
 from event_people.config import get_settings
 from event_people.utils import adjust_name_event
-
+from pika.exchange_type import ExchangeType
 config = get_settings
 
 class Queue:
@@ -11,23 +11,23 @@ class Queue:
             raise ValueError("Channel can't be None")
 
         self.channel = channel
-        self.channel.exchange_declare(exchange=config().EVENT_PEOPLE_TOPIC_NAME, exchange_type='topic')
+        self.channel.exchange_declare(exchange=config().EVENT_PEOPLE_TOPIC_NAME, exchange_type=ExchangeType.topic)
 
-    def subscribe(self, binding_key):
+    def subscribe(self, *binding_keys):
+        for binding_key in binding_keys:
+            routing_key = adjust_name_event(binding_key)
+            name_queue = self.queue_name(routing_key)
+            self.channel.queue_declare(name_queue, exclusive=True)
 
-        routing_key = adjust_name_event(binding_key)
-        name_queue = self.queue_name(routing_key)
-        self.channel.queue_declare(name_queue, exclusive=True)
+            self.channel.queue_bind(
+                    exchange=config().EVENT_PEOPLE_TOPIC_NAME, queue=name_queue, routing_key=routing_key)
 
-        self.channel.queue_bind(
-                exchange=config().EVENT_PEOPLE_TOPIC_NAME, queue=name_queue, routing_key=routing_key)
-
-    def start(self, event_name, callback):
-        print(' [*] Waiting for logs. To exit press CTRL+C')
-        queue_name = self.queue_name(event_name)
-        self.channel.basic_consume(
-            queue=queue_name, on_message_callback=callback)
-        self.channel.start_consuming()
+    def start(self,callback,*events_name):
+        for event_name in events_name:
+            routing_key = adjust_name_event(event_name)
+            queue_name = self.queue_name(routing_key)
+            self.channel.basic_consume(
+                queue=queue_name, on_message_callback=callback)
 
 
     def queue_name(self, routing_key) -> str:
