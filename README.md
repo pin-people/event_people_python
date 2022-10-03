@@ -4,12 +4,12 @@
 
 EventPeople is a tool to simplify the communication of event based services. It is an based on the [EventBus](https://github.com/EmpregoLigado/event_bus_rb) gem.
 
-The main idea is to provide a tool that can emit or consume events based on its names, the event name has 4 words (`resource.origin.action.destiny`) which defines some important info about what kind of event it is, where it comes from and who is eligible to consume it:
+The main idea is to provide a tool that can emit or consume events based on its names, the event name has 4 words (`resource.origin.action.destination`) which defines some important info about what kind of event it is, where it comes from and who is eligible to consume it:
 
 - **resource:** Defines which resource this event is related like a `user`, a `product`, `company` or anything that you want;
 - **origin:** Defines the name of the system which emitted the event;
 - **action:** What action is made on the resource like `create`, `delete`, `update`, etc. PS: *It is recommended to use the Semple Present tense for actions*;
-- **destiny (Optional):** This word is optional and if not provided EventPeople will add a `.all` to the end of the event name. It defines which service should consume the event being emitted, so if it is defined and there is a service whith the given name only this service will receive it. It is very helpful when you need to re-emit some events. Also if it is `.all` all services will receive it.
+- **destination (Optional):** This word is optional and if not provided EventPeople will add a `.all` to the end of the event name. It defines which service should consume the event being emitted, so if it is defined and there is a service whith the given name only this service will receive it. It is very helpful when you need to re-emit some events. Also if it is `.all` all services will receive it.
 
 As of today EventPeople uses RabbitMQ as its datasource, but there are plans to add support for other Brokers in the future.
 
@@ -50,7 +50,7 @@ The main component of `EventPeople` is the `Event` class which wraps all the log
 
 It has 2 attributes `name` and `payload`:
 
-- **name:** The name must follow our conventions, being it 3 (`resource.origin.action`) or 4 words (`resource.origin.action.destiny`);
+- **name:** The name must follow our conventions, being it 3 (`resource.origin.action`) or 4 words (`resource.origin.action.destination`);
 - **payload:** It is the body of the massage, it should be a Hash object for simplicity and flexibility.
 
 ```python
@@ -68,7 +68,7 @@ There are 3 main interfaces to use `EventPeople` on your project:
 
 - Calling `event_people.Emitter.trigger(event)` inside your project;
 - Calling `event_people.Listener.on(event_name)` inside your project;
-- Or extending `event_people.listeners.Base` and use it as a daemon.
+- Or extending `event_people.ListenersBase` and use it as a daemon.
 
 ### Using the Emitter
 You can emit events on your project passing an `event_people.event.Event` instance to the `event_people.emitter.trigger` method. Doing this other services that are subscribed to these events will receive it.
@@ -101,7 +101,7 @@ Other important aspect of event consumming is the result of the processing we pr
 - `fail!:` should be called when an error ocurred processing the event and the message should be requeued;
 - `reject!:` should be called whenever a message should be discarded without being processed.
 
-Given you want to consume a single event inside your project you can use the `EventPeople::Listener.on` method. It consumes a single event, given there are events available to be consumed with the given name pattern.
+Given you want to consume a single event inside your project you can use the `event_people.Listener.on` method. It consumes a single event, given there are events available to be consumed with the given name pattern.
 
 ```python
 from event_people import Listener
@@ -151,10 +151,10 @@ while(has_events):
 
 #### Multiple events routing
 
-If your project needs to handle lots of events you can extend `eventPeople.listeners.Base` class to bind how many events you need to instance methods, so whenever an event is received the method will be called automatically.
+If your project needs to handle lots of events you can extend `eventPeople.ListenersBase` class to bind how many events you need to instance methods, so whenever an event is received the method will be called automatically.
 
 ```python
-from event_people.listeners import Base
+from event_people import ListenersBase
 from event_people import Event
 
 class CustomEventListener(Base):
@@ -188,7 +188,7 @@ class CustomEventListener(Base):
 If you have the need to create a deamon to consume messages on background you can use the `eventPeople.Daemon.start` method to do so with ease. Just remember to define or import all the event bindings before starting the daemon.
 
 ```python
-from event_people.listeners import Base
+from event_people import ListenersBase
 from event_people import Event
 
 class CustomEventListener(Base):
