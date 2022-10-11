@@ -1,22 +1,14 @@
 from typing import Callable
 from src.utils import adjust_name_event
-from src.broker.rabbit import Rabbit
 
 class Listener:
 
     @staticmethod
-    def on(event_name: str, callback: Callable= None):
-        return Listener(event_name, callback)
-
-    def __init__(self, event_name, callback: Callable = None) -> None:
-        self.event_name = adjust_name_event(event_name)
-        self.callback = callback if callback else self.printing_callback
-
-        with Rabbit() as r:
-            r.consume(event_name=self.event_name)
-            self.start(self.event_name)
+    def on(event_name, callback = None):
+        broker_callback = callback if callback else Listener.basic_callback
+        Config.get_broker().consume(event_name, callback)
 
   
-    
+    @staticmethod
     def printing_callback(self, ch, method, properties, body):
         print(" [x] %r:%r" % (method.routing_key, body))

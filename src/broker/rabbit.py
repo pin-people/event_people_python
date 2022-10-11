@@ -7,30 +7,37 @@ from src.broker.queue import Queue
 config = get_settings()
 
 class Rabbit(Base):
+    def get_connection(self):
+        if(!self.connection.is_closed()):
+            return self.connection
 
-    def __init__(self) -> None:
-        self.connection = None
-        self.channel = None
+        try:
+            self.connection = self._channel()
+        except AMQPConnectionError:
+            raise ValueError("Error connecting to Rabbit instance, check if the VHOST setting is correct and that it is created.")
 
-    def __enter__(self):
-        self.connection = pika.BlockingConnection(
-                pika.URLParameters(config.EVENT_PEOPLE_RABBIT_URL))
-        self.channel = self.connection.channel()
-        return self
+    def consume(self, event_name, callback):
+        Queue.consume(self.get_conntection(), event_name, callback)
 
-    def consume(self, event_name):
-        q = Queue(self.channel)
-        q.subscribe(event_name)
-        q.start(event_name)
+    def produce(self, events):
+        events = hasattr(events, "__len__") ? events : [events]
 
-    def producer(self):
-        ...
+        for event in events:
+            Topic.produce(self.get_conntection(), event)
 
-    def close(self):
-        self.channel.close()
-        self.connection.close()
+    @classmethod
+    def close_connection(cls):
+        if(!self.connection.is_closed()):
+            self.connection.close()
+
+    def _channel(self):
+        connection = pika.SelectConnection(self._parameters)
+
+        return connection.channel()
         
-    def __exit__(self, exception_type, exception_value, traceback):
-        self.close()
-        if exception_value is not None:
-            print(exception_value)
+
+    def _parameters(self):
+        return pika.connection.URLParameters(self._full_url)
+
+    def _full_url(self):
+        return f'{Config.RABBIT_URL}/{Config.VHOST}'
