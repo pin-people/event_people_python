@@ -1,0 +1,40 @@
+#!/usr/bin/env python
+import os
+import sys
+
+sys.path.insert(0, 'src')
+
+os.environ['RABBIT_URL'] = 'amqp://guest:guest@localhost:5672'
+os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'service_name'
+os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
+
+from daemon import Daemon
+from listeners.base_listener import BaseListener
+
+class CustomEventListener(BaseListener):
+    def pay(self, event):
+        print(f"Paid {event.body['amount']} for {event.body['name']} ~> {event.name}")
+
+        self.success()
+
+    def receive(self, event):
+        if event.body['amount'] > 500:
+            print(f"Received {event.body['amount']} from {event.body['name']} ~> {event.name}")
+        else:
+            print('[consumer] Got SKIPPED message')
+
+            return self.reject()
+
+        self.success()
+
+    def private_channel(self, event):
+        print(f"[consumer] Got a private message: \"{event.body['message']}\" ~> {event.name}")
+
+        self.success()
+
+CustomEventListener.bind_event('resource.custom.pay', 'pay')
+CustomEventListener.bind_event('resource.custom.receive', 'receive')
+CustomEventListener.bind_event('resource.custom.private.service', 'private_channel')
+
+Daemon.start()

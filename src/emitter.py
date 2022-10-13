@@ -1,7 +1,21 @@
-class Emitter:
+from config import Config
+from broker.rabbit.topic import Topic
 
-    def trigger(self, *events):
+class Emitter:
+    @classmethod
+    def trigger(cls, *events):
+        cls().itrigger(events)
+    
+    def itrigger(self, events):
+        broker = Config.get_broker()
+        channel = broker.get_connection()
+
         for event in events:
-            Config.get_broker().produce(events)
+            broker.produce(events)
+
+        try:
+            channel.start_consuming()
+        finally:
+            channel.stop_consuming()
 
         return events
