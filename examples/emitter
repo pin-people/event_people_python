@@ -1,0 +1,53 @@
+#!/usr/bin/env python
+import os
+import sys
+
+sys.path.insert(0, 'src')
+
+os.environ['RABBIT_URL'] = 'amqp://guest:guest@localhost:5672'
+os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'service_name'
+os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
+
+from emitter import Emitter
+from event import Event
+
+events = []
+
+event_name = 'resource.custom.pay'
+body = { 'amount': 1500, 'name': 'John' }
+
+events.append(Event(event_name, body))
+
+event_name = 'resource.custom.receive'
+body = { 'amount': 35, 'name': 'Peter' }
+
+events.append(Event(event_name, body))
+
+event_name = 'resource.custom.receive'
+body = { 'amount': 350, 'name': 'George' }
+
+events.append(Event(event_name, body))
+
+event_name = 'resource.custom.receive'
+body = { 'amount': 550, 'name': 'James' }
+
+events.append(Event(event_name, body))
+
+event_name = 'resource.custom.private.service'
+body = { 'message': 'Secret' }
+
+events.append(Event(event_name, body))
+
+event_name = 'resource.origin.action'
+body = { 'bo': 'dy' }
+schema_version = 4.2
+
+event = Event(event_name, body, schema_version)
+
+print('Sending messsages...')
+
+Emitter.trigger(event)
+Emitter.trigger(events)
+
+print('Mesages sent!')

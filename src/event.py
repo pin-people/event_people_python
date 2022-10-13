@@ -3,6 +3,8 @@
 
 """
 import json
+import os
+import ast
 from pydantic import BaseModel
 from typing import Dict
 
@@ -18,17 +20,23 @@ class Event(object):
     """
         This class represents the pattern routing key got message_
     """
+    APP_NAME = os.environ['RABBIT_EVENT_PEOPLE_APP_NAME']
 
-    def __init__(self, name, body):
-         self.name = self.__fix_name__(name)
-         self.__generate_header__()
-         if body and "schema_version" in body:
-            self.header.schema_version = body['schema_version']
-         self.body = json.load(body)
+    def __init__(self, name, body, schema_version = 1.0):
+        self.name = self.__fix_name__(name)
+        self.__generate_header__()
+        body_dict = body
 
-    def __generate_header__(self, appName):
+        if type(body) != dict:
+             body_dict = ast.literal_eval(body.decode('utf-8'))
+
+        self.header.schema_version = schema_version
+
+        self.body = body_dict if 'body' not in body_dict else body_dict['body']
+
+    def __generate_header__(self):
         resource, origin, action, destination = self.name.split(".")
-        self.header = Header(app=Config.APP_NAME ,resource=resource, origin=origin, action=action, destination=destination)
+        self.header = Header(app=self.APP_NAME ,resource=resource, origin=origin, action=action, destination=destination)
 
     def __fix_name__(self, name):
         if len(name.split('.')) < 3:
