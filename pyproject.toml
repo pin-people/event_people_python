@@ -1,0 +1,22 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "event_people"
+version = "0.0.1"
+authors = [
+  { name="Pin People", email="tech@pinpeople.com.br" },
+]
+description = "Tool to simplify the communication of event based services."
+readme = "README.md"
+requires-python = ">=3.7"
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/pin-people/event_people_python"
+"Bug Tracker" = "https://github.com/pin-people/event_people_python/issues"
