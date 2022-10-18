@@ -1,32 +1,27 @@
-import pytest
-from typing import Any
-from src.listener import Listener
+from mock import patch
+import pika
 
-class MockCallback:
-    @staticmethod
-    def routing_key():
-        return "routing_key"
+class TestListener:
 
-def test_listener_with_event_name():
-    Listener.on('event_name..blalala', lambda x: print(x))
+    def callback(event, context):
+        print(event.name)
+        print(event.header)
+        print(event.body)
+        context.success()
 
-def test_listener_with_no_event_name():
-   with pytest.raises(ValueError):
-        Listener.on(None, lambda x: print(x))
+    def test_listen_event_with(self, setup):
+        from listener import Listener
+        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+            Listener.on('resource.custom.receive.all', TestListener.callback)
 
-def test_listener_with_wrong_pattern_event_name():
-   with pytest.raises(ValueError):
-        Listener.on("wrong.test", lambda x: print(x))
+    def test_listen_passing_callback_no_callback(self, setup):
+        from listener import Listener
 
-def test_listener_with_event_parts_name_with_all():
-    l = Listener.on('payment.payments.pay')
-    assert l.event_name == 'payment.payments.pay.all'
+        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+            Listener.on('resource.custom.receive.all', TestListener.callback)
 
-def test_listener_with_callback_none():
-    l = Listener.on(event_name='payment.payments.pay.all', callback=None)
-    assert l.callback is not None
-    l.callback(None, MockCallback, None, {'body': 'example'})
+    def test_listen_event_name_with_three_parts(self, setup):
+        from listener import Listener
 
-def test_listener_callback_not_none():
-    l = Listener.on(event_name='payment.payments.pay.all', callback=lambda x: print('testing', x))
-    l.callback(10)
+        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+            Listener.on('resource.custom.receive', TestListener.callback)

@@ -5,16 +5,19 @@
 import json
 import os
 import ast
-from pydantic import BaseModel
-from typing import Dict
 
-class Header(BaseModel):
-    app: str
-    resource: str
-    origin: str
-    action: str
-    destination: str = 'all'
-    schema_version: float = 1.0
+class Header:
+
+    def __init__(self, app, resource, origin, action, destination):
+        self.app = app
+        self.resource = resource
+        self.origin = origin
+        self.action = action
+        self.destination = destination
+        self.schema_version =  1.0
+
+    def __str__(self):
+        return f'{self.app}.{self.resource}.{self.origin}.{self.action}.{self.destination}.{self.schema_version}'
 
 class Event(object):
     """

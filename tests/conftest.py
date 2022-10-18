@@ -1,29 +1,17 @@
 import pytest
-from mock import patch
-import pytest
-from decouple import Config, RepositoryEnv
-from io import StringIO
+import os
+import sys
 
-from src.config import Settings
+@pytest.fixture(scope='function')
+def setup():
+    os.environ['RABBIT_URL'] = 'amqp://guest:guest@localhost:5672'
+    os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'service_name'
+    os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
+    os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
+    sys.path.insert(0, 'src')
+    yield
 
-ENVFILE = '''
-
-RABBIT_URL = amqp://guest:guest@localhost:5672
-RABBIT_EVENT_PEOPLE_APP_NAME = service_name
-RABBIT_EVENT_PEOPLE_VHOST = event_people
-RABBIT_EVENT_PEOPLE_TOPIC_NAME = event_people
-
-
-'''
-
-
-@pytest.fixture(scope='module')
-def config():
-    with patch('decouple.open', return_value=StringIO(ENVFILE), create=True):
-        return Config(RepositoryEnv('.env'))
-
-@pytest.fixture(scope='module')
-def settings(config):
-    with patch('src.config.config',config) as c:
-        s = Settings()
-        return s
+    os.unsetenv('RABBIT_URL')
+    os.unsetenv('RABBIT_EVENT_PEOPLE_APP_NAME')
+    os.unsetenv('RABBIT_EVENT_PEOPLE_VHOST')
+    os.unsetenv('RABBIT_EVENT_PEOPLE_TOPIC_NAME')

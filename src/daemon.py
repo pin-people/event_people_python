@@ -10,5 +10,5 @@ class Daemon:
 
         try:
             channel.start_consuming()
-        except KeyboardInterrupt:
-            channel.stop_consuming()
+        except KeyboardInterrupt: #pragma: no cover
+            channel.stop_consuming()##pragma: no cover

@@ -21,11 +21,11 @@ class Queue:
 
     def isubscribe(self, event_name, continuous, callback):
         queue_name = self._define_queue(event_name)
-        
+
         on_message_callback = partial(self._callback, args=(continuous, callback))
         self._channel.basic_consume(
             queue=queue_name, on_message_callback=on_message_callback, auto_ack=False)
-    
+
     def _define_queue(self, event_name):
         routing_key = '.'.join(event_name.split('.')[0:4])
 
@@ -37,9 +37,6 @@ class Queue:
             exchange=self.TOPIC_NAME, queue=queue_name, routing_key=routing_key)
 
         return queue_name
-
-    def _topic(self):
-        Topic.get_topic(self._channel)
 
     def _callback(self, channel, delivery_info, properties, payload, args):
         continuous, callback = args
@@ -55,6 +52,9 @@ class Queue:
 
     def _queue_name(self, routing_key) -> str:
         broken_event_name = routing_key.split('.')
+        if len(broken_event_name) < 3:
+            raise ValueError("queue name must follow the pattern, resource.origin.action or resource.origin.action.destination")
+
         event_name = '.'.join(broken_event_name[0:4])
 
         if broken_event_name[3] != 'all':
