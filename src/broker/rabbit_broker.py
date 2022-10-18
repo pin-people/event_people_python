@@ -33,10 +33,6 @@ class RabbitBroker(Base):
             else:
                 Topic.produce(self.get_connection(), event)
 
-    @classmethod
-    def close_connection(cls):
-        if not self.connection.is_closed():
-            self.connection.close()
 
     def _channel(self):
         connection = pika.BlockingConnection(self._parameters())

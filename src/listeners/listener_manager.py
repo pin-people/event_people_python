@@ -1,5 +1,4 @@
 from config import Config
-from broker.rabbit.topic import Topic
 
 class ListenerManager:
     _listeners = []
@@ -18,6 +17,7 @@ class ListenerManager:
 
     @classmethod
     def callback(cls, event, context):
+
         listener = next(lst for lst in cls._listeners if lst.event_name == event.name)
 
         instance = listener.listener_class(context)
