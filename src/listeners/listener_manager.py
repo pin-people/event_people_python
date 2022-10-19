@@ -13,17 +13,7 @@ class ListenerManager:
         broker = Config.get_broker()
 
         for listener in cls._listeners:
-            broker.consume(listener.event_name, cls.callback)
-
-    @classmethod
-    def callback(cls, event, context):
-
-        listener = next(lst for lst in cls._listeners if lst.event_name == event.name)
-
-        instance = listener.listener_class(context)
-        method = getattr(instance, listener.callback)
-
-        method(event)
+            broker.consume(listener.event_name, listener.listener_class.callback, final_method_name=listener.callback)
 
 
 class ListenerConfiguration:

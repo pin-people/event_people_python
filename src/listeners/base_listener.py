@@ -27,6 +27,13 @@ class BaseListener:
             )
 
     @classmethod
+    def callback(cls, event, context, final_method_name):
+        instance = cls(context)
+        method = getattr(instance, final_method_name)
+
+        method(event)
+
+    @classmethod
     def fixed_event_name(cls, event_name, postfix):
         routing_key = event_name
         splited = event_name.split('.')
@@ -35,9 +42,6 @@ class BaseListener:
             routing_key = f'{event_name}.{postfix}'
 
         return routing_key
-
-    def callback(self, event, callback):
-        callback(event, self._context)
 
     def success(self):
         self._context.success()

@@ -33,7 +33,7 @@ class CustomEventListener(BaseListener):
 
         self.success()
 
-CustomEventListener.bind_event('resource.custom.pay', 'pay')
+CustomEventListener.bind_event('resource.*.pay', 'pay')
 CustomEventListener.bind_event('resource.custom.receive', 'receive')
 CustomEventListener.bind_event('resource.custom.private.service', 'private_channel')
 
