@@ -1,4 +1,3 @@
-from typing import List
 from mock import patch
 import pytest
 import pika
@@ -54,7 +53,7 @@ class TestListenerManager:
         ListenerManager.add_listener(listener_class=TestListener, callback=None, event_name='resource.custom.service.all')
         assert len(ListenerManager._listeners) == 2
 
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
             ListenerManager.bind_all_listeners()
 
     def test_listener_callback_ok(self, setup):

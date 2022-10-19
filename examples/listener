@@ -10,7 +10,6 @@ os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
 os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
 
 from listener import Listener
-from config import Config
 
 def callback(event, context):
   print(event.name)

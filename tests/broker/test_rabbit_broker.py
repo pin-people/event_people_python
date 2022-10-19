@@ -1,6 +1,5 @@
 from mock import patch
 import pika
-import mock
 
 class TestRabbitBroker:
 
@@ -31,7 +30,7 @@ class TestRabbitBroker:
     def test_consume_event(self, setup):
         from broker.rabbit_broker import RabbitBroker
 
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             rabbit.consume('resource.custom.recieve.action', TestRabbitBroker.callback, False)
 
@@ -39,7 +38,7 @@ class TestRabbitBroker:
         from broker.rabbit_broker import RabbitBroker
         from event import Event
         events = []
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             event_name = 'resource.custom.receive'
             body = { 'amount': 350, 'name': 'George' }
@@ -68,7 +67,7 @@ class TestRabbitBroker:
         from broker.rabbit_broker import RabbitBroker
         from event import Event
 
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
 
             event_name = 'resource.origin.action'
