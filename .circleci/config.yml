@@ -1,0 +1,41 @@
+# Ruby CircleCI 2.0 configuration file
+#
+# Check https://circleci.com/docs/2.1/language-ruby/ for more details
+#
+version: 2.1
+jobs:
+  validate:
+    docker:
+      # specify the version you desire here
+      - image: cimg/pthon:3.10
+
+    steps:
+      - checkout
+
+      # Download and cache dependencies
+      - restore_cache:
+          keys:
+          - pin-people-event-people-deps-{{ checksum "Gemfile.lock" }}
+          - pin-people-event-people-deps-
+
+      - run:
+          name: install dependencies
+          command: |
+            python -m pip install -r requirements-dev.txt
+
+      - save_cache:
+          paths:
+            - ./vendor/bundle
+          key: pin-people-event-people-deps-{{ checksum "requirements-dev.txt" }}
+
+      # run tests!
+      - run:
+          name: run tests
+          command: |
+            pytest
+
+workflows:
+  version: 2.1
+  validate:
+    jobs:
+      - validate
