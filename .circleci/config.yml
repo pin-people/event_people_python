@@ -15,7 +15,7 @@ jobs:
       # Download and cache dependencies
       - restore_cache:
           keys:
-          - pin-people-event-people-deps-{{ checksum "Gemfile.lock" }}
+          - pin-people-event-people-deps-{{ checksum "requirements-dev.txt" }}
           - pin-people-event-people-deps-
 
       - run:
