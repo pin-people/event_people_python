@@ -16,13 +16,13 @@ class Queue:
         self._channel = channel
 
     @classmethod
-    def subscribe(cls, channel, event_name, continuous, callback):
-        cls(channel).isubscribe(event_name, continuous, callback)
+    def subscribe(cls, channel, event_name, continuous, callback, final_method_name=None):
+        cls(channel).isubscribe(event_name, continuous, callback, final_method_name)
 
-    def isubscribe(self, event_name, continuous, callback):
+    def isubscribe(self, event_name, continuous, callback, final_method_name=None):
         queue_name = self._define_queue(event_name)
 
-        on_message_callback = partial(self._callback, args=(continuous, callback))
+        on_message_callback = partial(self._callback, args=(continuous, callback, final_method_name))
         self._channel.basic_consume(
             queue=queue_name, on_message_callback=on_message_callback, auto_ack=False)
 
@@ -39,13 +39,13 @@ class Queue:
         return queue_name
 
     def _callback(self, channel, delivery_info, properties, payload, args):
-        continuous, callback = args
+        continuous, callback, final_method_name = args
         event_name = delivery_info.routing_key
 
         event = Event(event_name, payload)
         context = Context(channel, delivery_info)
 
-        callback(event, context)
+        callback(event, context, final_method_name)
 
         if not continuous:
             channel.stop_consuming()

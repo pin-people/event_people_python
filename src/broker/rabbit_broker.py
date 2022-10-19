@@ -20,8 +20,8 @@ class RabbitBroker(Base):
         except AMQPConnectionError:
             raise ValueError("Error connecting to Rabbit instance, check if the VHOST setting is correct and that it is created.")
 
-    def consume(self, event_name, callback, continuous=True):
-        Queue.subscribe(self.get_connection(), event_name, continuous, callback)
+    def consume(self, event_name, callback, final_method_name=None, continuous=True):
+        Queue.subscribe(self.get_connection(), event_name, continuous, callback, final_method_name)
 
     def produce(self, events):
         events = events if hasattr(events, "__len__") else [events]
