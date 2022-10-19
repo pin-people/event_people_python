@@ -33,8 +33,15 @@ class CustomEventListener(BaseListener):
 
         self.success()
 
+    def ignore_me(self, event):
+        print(f"This should never be called...")
+        print(f"Spying on other systems: \"{event.body['message']}\" ~> {event.name}")
+
+        self.success()
+
 CustomEventListener.bind_event('resource.*.pay', 'pay')
 CustomEventListener.bind_event('resource.custom.receive', 'receive')
-CustomEventListener.bind_event('resource.custom.private.service', 'private_channel')
+CustomEventListener.bind_event('resource.custom.private.service_name', 'private_channel')
+CustomEventListener.bind_event('resource.custom.ignored.other_service', 'ignore_me')
 
 Daemon.start()

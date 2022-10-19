@@ -34,8 +34,13 @@ body = { 'amount': 550, 'name': 'James' }
 
 events.append(Event(event_name, body))
 
-event_name = 'resource.custom.private.service'
+event_name = 'resource.custom.private.service_name'
 body = { 'message': 'Secret' }
+
+events.append(Event(event_name, body))
+
+event_name = 'resource.custom.ignored.other_service'
+body = { 'message': 'ignored' }
 
 events.append(Event(event_name, body))
 
