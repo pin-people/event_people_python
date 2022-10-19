@@ -33,6 +33,8 @@ class Queue:
         queue = self._channel.queue_declare(
             queue_name, durable=True, exclusive=False)
 
+        print(routing_key)
+
         self._channel.queue_bind(
             exchange=self.TOPIC_NAME, queue=queue_name, routing_key=routing_key)
 
