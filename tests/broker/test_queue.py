@@ -28,6 +28,7 @@ class TestQueue:
     def test_create_queue_without_channel(self):
         with pytest.raises(ValueError):
             q = Queue(None)
+            assert q
 
     def test_create_queue_with_channel_ok(self):
         with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):

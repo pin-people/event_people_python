@@ -9,10 +9,10 @@ class TestConfig:
         assert Config().TOPIC_NAME == 'event_people'
 
     def test_config_get_broker(self, setup):
-            from config import Config
-            config = Config()
-            broker = config.get_broker()
-            assert broker is not None
+        from config import Config
+        config = Config()
+        broker = config.get_broker()
+        assert broker is not None
 
 
 
