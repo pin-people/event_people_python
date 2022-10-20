@@ -9,7 +9,7 @@ class Base:
         raise NotImplementedError('Must be implemented') #pragma: no cover
 
     @classmethod
-    def consume(cls, event_name, callback):
+    def consume(cls, event_name, callback,final_method_name=None, continuous=True):
         if(cls.consumers[event_name]):
             return cls.consumers[event_name]
 

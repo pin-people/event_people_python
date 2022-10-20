@@ -30,7 +30,7 @@ class Event(object):
         self.__generate_header__()
         body_dict = body
 
-        if type(body) != dict:
+        if isinstance(body) != dict:
              body_dict = ast.literal_eval(body.decode('utf-8'))
 
         self.header.schema_version = schema_version
