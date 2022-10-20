@@ -31,7 +31,7 @@ class Event(object):
         body_dict = body
 
         if not isinstance(body, dict):
-             body_dict = ast.literal_eval(body.decode('utf-8'))
+            body_dict = ast.literal_eval(body.decode('utf-8'))
 
         self.header.schema_version = schema_version
 

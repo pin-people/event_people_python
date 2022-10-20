@@ -21,11 +21,11 @@ class TestRabbitBroker:
         from event_people import RabbitBroker
 
         with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection) as mocked_connection:
-                mocked_connection.is_closed = False
-                rabbit = RabbitBroker()
-                rabbit.connection = mocked_connection
-                channel = rabbit.get_connection()
-                assert channel
+            mocked_connection.is_closed = False
+            rabbit = RabbitBroker()
+            rabbit.connection = mocked_connection
+            channel = rabbit.get_connection()
+            assert channel
 
     def test_consume_event(self, setup):
         from event_people import RabbitBroker
