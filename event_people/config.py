@@ -1,5 +1,6 @@
 import os
-from broker.rabbit_broker import RabbitBroker
+
+from event_people.broker.rabbit_broker import RabbitBroker
 
 class Config:
     """ Class that load all enviroment variable necessary to feature works"""

@@ -1,9 +1,10 @@
 import os
 import pika
 from pika.exceptions import AMQPConnectionError
-from .base import Base
-from .rabbit.queue import Queue
-from .rabbit.topic import Topic
+
+from event_people.broker.rabbit.queue import Queue
+from event_people.broker.base import Base
+from event_people.broker.rabbit.topic import Topic
 
 class RabbitBroker(Base):
     VHOST = os.environ['RABBIT_EVENT_PEOPLE_VHOST']

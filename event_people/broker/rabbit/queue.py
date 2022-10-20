@@ -1,6 +1,6 @@
 import os
 from functools import partial
-from event import Event
+from event_people.event import Event
 from .context import Context
 
 class Queue:

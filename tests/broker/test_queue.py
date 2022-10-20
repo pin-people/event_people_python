@@ -4,71 +4,70 @@ import pika
 import os
 
 from pika.spec import Basic
-import sys
 
-os.environ['RABBIT_URL'] = 'amqp://guest:guest@localhost:5672'
-os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'service_name'
-os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
-os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
-sys.path.insert(0, 'src')
-
-from broker.rabbit.queue import Queue
-from broker.rabbit_broker import RabbitBroker
-from broker.rabbit.context import Context
 
 class TestQueue:
 
-    def callback(event, context):
+    def callback(event, context, final_method):
         print(event.name)
         print(event.header)
         print(event.body)
+        print(final_method)
         context.success()
 
 
-    def test_create_queue_without_channel(self):
+    def test_create_queue_without_channel(self, setup):
+        from event_people import Queue
         with pytest.raises(ValueError):
             q = Queue(None)
             assert q
 
-    def test_create_queue_with_channel_ok(self):
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+    def test_create_queue_with_channel_ok(self, setup):
+        from event_people import RabbitBroker
+        from event_people import Queue
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             channel = rabbit.get_connection()
             q = Queue(channel)
             assert q
 
-    def test_queue_without_connection_sucessfully_created(self):
-        os.environ['RABBIT_URL'] = 'amqp://guest:guest@localhost:7787'
-        with pytest.raises(ValueError):
-            rabbit = RabbitBroker()
-            rabbit.get_connection()
 
-    def test_subscribe_queue_ok(self):
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+    def test_subscribe_queue_ok(self, setup):
+        from event_people import RabbitBroker
+        from event_people import Queue
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             channel = rabbit.get_connection()
             Queue.subscribe(channel, 'resource.custom.receive.all', True, TestQueue.callback)
 
 
-    def test_subscribe_queue_name_less_four_parts(self):
+    def test_subscribe_queue_name_less_four_parts(self, setup):
+        from event_people import RabbitBroker
+        from event_people import Queue
         with pytest.raises(ValueError):
-            with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+            with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
                 rabbit = RabbitBroker()
                 channel = rabbit.get_connection()
                 Queue.subscribe(channel, 'resource.custom', False, TestQueue.callback)
 
-    def test_subscribe_with_fourth_queue_name_different_than_all(self):
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+    def test_subscribe_with_fourth_queue_name_different_than_all(self, setup):
+        from event_people import RabbitBroker
+        from event_people import Queue
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             channel = rabbit.get_connection()
             Queue.subscribe(channel, 'resource.custom.recieve.action', False, TestQueue.callback)
 
     def test_callback_subscribe_sucessffuly(self, setup):
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+        from event_people import RabbitBroker
+        from event_people import Context
+        from event_people import Queue
+
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             channel = rabbit.get_connection()
             delivery_tag = Basic.Deliver('consumer_tag_')
             delivery_tag.routing_key = 'resource.custom.pay'
             body = { 'amount': 350, 'name': 'George' }
             context = Context(channel, delivery_tag)
-            Queue._callback(None, channel=channel, delivery_info= delivery_tag, properties=context, payload=body, args=[False, TestQueue.callback])
+            Queue._callback(None, channel=channel, delivery_info= delivery_tag, properties=context, payload=body, args=[False, TestQueue.callback, 'callback'])

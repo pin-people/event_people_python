@@ -1,5 +1,4 @@
-from config import Config
-from broker.rabbit.topic import Topic
+from event_people.config import Config
 
 class Emitter:
     @classmethod
@@ -10,8 +9,7 @@ class Emitter:
         broker = Config.get_broker()
         channel = broker.get_connection()
 
-        for event in events:
-            broker.produce(events)
+        broker.produce(events)
 
         try:
             channel.start_consuming()
