@@ -9,6 +9,7 @@ class TestListener:
         print(event.body)
         context.success()
 
+
     def test_listen_event_with(self, setup):
         from event_people import Listener
         with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
