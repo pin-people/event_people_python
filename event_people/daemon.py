@@ -1,5 +1,5 @@
-from config import Config
-from listeners.listener_manager import ListenerManager
+from event_people.config import Config
+from event_people.listeners.listener_manager import ListenerManager
 
 class Daemon:
     @classmethod

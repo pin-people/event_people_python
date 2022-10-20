@@ -1,4 +1,4 @@
-from config import Config
+from event_people.config import Config
 
 class ListenerManager:
     _listeners = []

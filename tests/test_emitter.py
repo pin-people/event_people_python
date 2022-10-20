@@ -1,21 +1,22 @@
-from mock import patch
+
 import pika
+from mock import patch
 
 class TestEmitter:
 
-    def test_with_one_event(self):
-        from emitter import Emitter
-        from event import Event
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+    def test_with_one_event(self, setup):
+        from event_people import Emitter
+        from event_people import Event
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             body = { 'amount': 350, 'name': 'George' }
             event = Event(name='resource.custom.pay', body=body)
             Emitter.trigger(event)
 
-    def test_with_more_than_one_event(self):
-        from emitter import Emitter
-        from event import Event
+    def test_with_more_than_one_event(self, setup):
+        from event_people import Emitter
+        from event_people import Event
         events = []
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             body = { 'amount': 350, 'name': 'George' }
             event1 = Event(name='resource.custom.pay', body=body)
             events.append(event1)

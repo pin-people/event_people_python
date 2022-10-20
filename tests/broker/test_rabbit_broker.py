@@ -10,17 +10,17 @@ class TestRabbitBroker:
         context.success()
 
     def test_get_connection_ok(self, setup):
-        from broker.rabbit_broker import RabbitBroker
+        from event_people import RabbitBroker
 
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             channel = rabbit.get_connection()
             assert channel
 
     def test_get_connection_with_open_status(self,setup):
-        from broker.rabbit_broker import RabbitBroker
+        from event_people import RabbitBroker
 
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection) as mocked_connection:
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection) as mocked_connection:
                 mocked_connection.is_closed = False
                 rabbit = RabbitBroker()
                 rabbit.connection = mocked_connection
@@ -28,17 +28,16 @@ class TestRabbitBroker:
                 assert channel
 
     def test_consume_event(self, setup):
-        from broker.rabbit_broker import RabbitBroker
-
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+        from event_people import RabbitBroker
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             rabbit.consume('resource.custom.recieve.action', TestRabbitBroker.callback, False)
 
     def test_produce_list_events(self, setup):
-        from broker.rabbit_broker import RabbitBroker
-        from event import Event
+        from event_people import RabbitBroker
+        from event_people import Event
         events = []
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             event_name = 'resource.custom.receive'
             body = { 'amount': 350, 'name': 'George' }
@@ -64,10 +63,9 @@ class TestRabbitBroker:
             rabbit.produce(events)
 
     def test_produce_unique_event(self, setup):
-        from broker.rabbit_broker import RabbitBroker
-        from event import Event
-
-        with patch('broker.rabbit_broker.pika.BlockingConnection', spec=pika.BlockingConnection):
+        from event_people import RabbitBroker
+        from event_people import Event
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
 
             event_name = 'resource.origin.action'

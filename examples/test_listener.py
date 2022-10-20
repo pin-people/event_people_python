@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 import os
 import sys
 
@@ -7,10 +6,10 @@ os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'service_name'
 os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
 os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
 
-SCRIPT_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-sys.path.append(SCRIPT_DIR)
+sys.path.insert(0, 'event_people')
 
-from event_people import Listener
+from listener import Listener
+##from event_people import Listener
 
 def callback(event, context):
   print(event.name)
@@ -19,3 +18,5 @@ def callback(event, context):
   context.success()
 
 Listener.on('resource.origin.action', callback)
+
+
