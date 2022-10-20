@@ -39,7 +39,6 @@ class RabbitBroker(Base):
         connection = pika.BlockingConnection(self._parameters())
 
         return connection.channel()
-        
 
     def _parameters(self):
         return pika.connection.URLParameters(self._full_url())

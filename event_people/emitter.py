@@ -4,7 +4,7 @@ class Emitter:
     @classmethod
     def trigger(cls, *events):
         cls().itrigger(events)
-    
+
     def itrigger(self, events):
         broker = Config.get_broker()
         channel = broker.get_connection()

@@ -35,6 +35,6 @@ def load_listener_test(setup):
                 print(f"Received {event.body['amount']} from {event.body['name']} ~> {event.name}")
             else:
                 print('[consumer] Got SKIPPED message')
-    
+
     return TestListener, setup
 

@@ -30,7 +30,7 @@ class Queue:
         routing_key = '.'.join(event_name.split('.')[0:4])
 
         queue_name = self._queue_name(routing_key)
-        queue = self._channel.queue_declare(
+        self._channel.queue_declare(
             queue_name, durable=True, exclusive=False)
 
         print(routing_key)

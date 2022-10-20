@@ -1,5 +1,3 @@
-import os
-
 import pika
 from mock import patch
 

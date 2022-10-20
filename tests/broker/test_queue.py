@@ -1,7 +1,6 @@
 import pytest
 from mock import patch
 import pika
-import os
 
 from pika.spec import Basic
 
