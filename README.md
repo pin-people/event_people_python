@@ -17,9 +17,7 @@ As of today EventPeople uses RabbitMQ as its datasource, but there are plans to 
 
 Add this line to your project's `requirements.txt` file:
 
-```
 event_people>=0.0.1
-```
 
 And then execute
 
@@ -32,7 +30,6 @@ Or install it with:
 ```bash
 python -m pip install event_people
 ```
-
 
 And set env vars:
 ```bash
@@ -220,7 +217,6 @@ print('****************** Daemon Ready ******************');
 Daemon.start()
 ```
 [See more details](https://github.com/pin-people/event_people_python/blob/master/examples/daemon.rb)
-
 
 ## Development
 
