@@ -8,7 +8,7 @@ class TestEvent:
         from event_people import Event
 
         event_name = 'resource.custom.receive'
-        body = b"{'amount': 35, 'name': 'Peter' }"
+        body = b"{'amount': 35, 'name': 'Peter'}"
 
         event = Event(name=event_name, body=body)
 
@@ -24,13 +24,29 @@ class TestEvent:
         with pytest.raises(ValueError):
             Event(name=event_name, body=body)
 
-    def test_get_pyload(self, setup):
+    def test_get_payload_succeffuly(self, setup):
         from event_people import Event
         event_name = 'resource.custom.receive'
-        body = b"{'amount': 35, 'name': 'Peter' }"
+        body = b"{'amount': 35, 'name': 'Peter'}"
 
         event = Event(name=event_name, body=body)
 
         resp = json.loads(event.payload())
 
-        assert resp['header'] == 'service_name.resource.custom.receive.all.1.0'
+        header = ast.literal_eval(resp['header'])
+        assert header['app'] == 'service_name'
+        assert header['resource'] == 'resource'
+        assert header['origin'] == 'custom'
+
+        assert resp['body'] == body.decode('utf-8')
+
+    def test_get_payload_with_empty_body(self, setup):
+        from event_people import Event
+        event_name = 'resource.custom.receive'
+        body = {}
+
+        event = Event(name=event_name, body=body)
+
+        resp = json.loads(event.payload())
+
+        assert ast.literal_eval(resp['body']) == body
