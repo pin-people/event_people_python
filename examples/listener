@@ -14,7 +14,7 @@ from event_people import Listener
 
 def callback(event, context):
   print(event.name)
-  print(event.header)
+  print(event.headers)
   print(event.body)
   context.success()
 

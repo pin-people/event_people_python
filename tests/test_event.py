@@ -33,12 +33,12 @@ class TestEvent:
 
         resp = json.loads(event.payload())
 
-        header = ast.literal_eval(resp['header'])
+        header = resp['headers']
         assert header['app'] == 'service_name'
         assert header['resource'] == 'resource'
         assert header['origin'] == 'custom'
 
-        assert resp['body'] == body.decode('utf-8')
+        assert resp['body'] == ast.literal_eval(body.decode('utf-8'))
 
     def test_get_payload_with_empty_body(self, setup):
         from event_people import Event
@@ -49,4 +49,4 @@ class TestEvent:
 
         resp = json.loads(event.payload())
 
-        assert ast.literal_eval(resp['body']) == body
+        assert resp['body'] == body

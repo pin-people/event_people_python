@@ -4,7 +4,7 @@ import sys
 import os
 
 os.environ['RABBIT_URL'] = 'amqp://guest:guest@localhost:5672'
-os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'service_name'
+os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
 os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
 os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
 
@@ -45,5 +45,6 @@ CustomEventListener.bind_event('resource.*.pay', 'pay')
 CustomEventListener.bind_event('resource.custom.receive', 'receive')
 CustomEventListener.bind_event('resource.custom.private.service_name', 'private_channel')
 CustomEventListener.bind_event('resource.custom.ignored.other_service', 'ignore_me')
+CustomEventListener.bind_event('resource.custom.pay.all', 'receive')
 
 Daemon.start()
