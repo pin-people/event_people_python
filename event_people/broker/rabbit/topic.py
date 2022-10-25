@@ -28,6 +28,6 @@ class Topic:
 
     def iproduce(self, event):
         topic = self.iget_topic()
-        body = json.dumps(event.__dict__, indent=2).encode('utf-8')
+        body = json.dumps(event.payload(), indent=2).encode('utf-8')
 
         topic.basic_publish(exchange=self.TOPIC_NAME, routing_key=event.name, body=body)
