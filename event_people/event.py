@@ -14,7 +14,7 @@ class Header:
         self.origin = origin
         self.action = action
         self.destination = destination
-        self.schema_version = schema_version || 1.0
+        self.schema_version = schema_version or 1.0
 
     def __str__(self):
         return f'{self.app}.{self.resource}.{self.origin}.{self.action}.{self.destination}.{self.schema_version}'
@@ -34,13 +34,13 @@ class Event(object):
         if not isinstance(body, dict):
             body_dict = ast.literal_eval(body.decode('utf-8'))
 
-        self.header['schema_version'] = schema_version
+        self.header.schema_version = schema_version
 
         self.body = body_dict if 'body' not in body_dict else body_dict['body']
 
     def __generate_header__(self, schema_version):
         resource, origin, action, destination = self.name.split(".")
-        self.header = Header(app=self.APP_NAME ,resource=resource, origin=origin, action=action, destination=destination, schema_version=schema_version).__dict__
+        self.header = Header(app=self.APP_NAME ,resource=resource, origin=origin, action=action, destination=destination, schema_version=schema_version)
 
     def __fix_name__(self, name):
         if len(name.split('.')) < 3:
@@ -49,4 +49,4 @@ class Event(object):
         return f'{name}.all' if len(name.split('.')) == 3 else name
 
     def payload(self):
-       return json.dumps({"header": str(self.header), "body": str(self.body)})
+       return json.dumps({"header": (self.header.__dict__), "body": str(self.body)})
