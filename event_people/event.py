@@ -38,6 +38,7 @@ class Event(object):
 
         self.body = body_dict if 'body' not in body_dict else body_dict['body']
 
+
     def __generate_header__(self, schema_version):
         resource, origin, action, destination = self.name.split(".")
         self.header = Header(app=self.APP_NAME ,resource=resource, origin=origin, action=action, destination=destination, schema_version=schema_version)
@@ -49,4 +50,4 @@ class Event(object):
         return f'{name}.all' if len(name.split('.')) == 3 else name
 
     def payload(self):
-       return json.dumps({"header": (self.header.__dict__), "body": str(self.body)})
+       return json.dumps({"headers": self.header.__dict__, "body": self.body})

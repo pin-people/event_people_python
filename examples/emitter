@@ -4,7 +4,7 @@ import sys
 
 
 os.environ['RABBIT_URL'] = 'amqp://guest:guest@localhost:5672'
-os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'service_name'
+os.environ['RABBIT_EVENT_PEOPLE_APP_NAME'] = 'EventPeopleExampleApp'
 os.environ['RABBIT_EVENT_PEOPLE_VHOST'] = 'event_people'
 os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME'] = 'event_people'
 
