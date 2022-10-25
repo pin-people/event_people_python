@@ -17,7 +17,9 @@ As of today EventPeople uses RabbitMQ as its datasource, but there are plans to 
 
 Add this line to your project's `requirements.txt` file:
 
+```python
 event_people>=0.0.1
+```
 
 And then execute
 
