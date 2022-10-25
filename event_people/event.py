@@ -8,7 +8,7 @@ import ast
 
 class Header:
 
-    def __init__(self, app, resource, origin, action, destination, schema_version):
+    def __init__(self, app, resource, origin, action, destination, schema_version=None):
         self.app = app
         self.resource = resource
         self.origin = origin
