@@ -14,7 +14,7 @@ class Header:
         self.origin = origin
         self.action = action
         self.destination = destination
-        self.schema_version = schema_version
+        self.schema_version = schema_version || 1.0
 
     def __str__(self):
         return f'{self.app}.{self.resource}.{self.origin}.{self.action}.{self.destination}.{self.schema_version}'
