@@ -17,7 +17,7 @@ As of today EventPeople uses RabbitMQ as its datasource, but there are plans to 
 
 Add this line to your project's `requirements.txt` file:
 
-```python
+```text
 event_people>=0.0.1
 ```
 
@@ -187,32 +187,41 @@ class CustomEventListener(Base):
 If you have the need to create a deamon to consume messages on background you can use the `eventPeople.Daemon.start` method to do so with ease. Just remember to define or import all the event bindings before starting the daemon.
 
 ```python
-from event_people import ListenersBase
-from event_people import Event
+from event_people import Daemon
+from event_people import BaseListener
 
-class CustomEventListener(Base):
-    self.bind('resource.custom.pay', self.pay)
-    self.bind('resource.custom.receive', self.receive)
-    self.bind('resource.custom.private.service', self.private_channel)
-
-    def pay(event):
-        print("Paid %r for %r ~> %r", event.body['amount'], event.body['name'], event.name)
+class CustomEventListener(BaseListener):
+    def pay(self, event):
+        print(f"Paid {event.body['amount']} for {event.body['name']} ~> {event.name}")
 
         self.success()
 
-    def receive(event):
-        if (event.body.amount > 500):
-          print("Received %r from %r ~> %r", event.body['amount'], event.body['name'], event.name)
-      else:
-          print("[consumer] Got SKIPPED message")
-          return self.reject()
+    def receive(self, event):
+        if event.body['amount'] > 500:
+            print(f"Received {event.body['amount']} from {event.body['name']} ~> {event.name}")
+        else:
+            print('[consumer] Got SKIPPED message')
 
-          self.success();
+            return self.reject()
 
-  def private_channel(event):
-    print("[consumer] Got a private message: \"%r\" ~> %r", event.body['message'], event.name)
+        self.success()
 
-    self.success();
+    def private_channel(self, event):
+        print(f"[consumer] Got a private message: \"{event.body['message']}\" ~> {event.name}")
+
+        self.success()
+
+    def ignore_me(self, event):
+        print(f"This should never be called...")
+        print(f"Spying on other systems: \"{event.body['message']}\" ~> {event.name}")
+
+        self.success()
+
+CustomEventListener.bind_event('resource.*.pay', 'pay')
+CustomEventListener.bind_event('resource.custom.receive', 'receive')
+CustomEventListener.bind_event('resource.custom.private.service_name', 'private_channel')
+CustomEventListener.bind_event('resource.custom.ignored.other_service', 'ignore_me')
+CustomEventListener.bind_event('resource.custom.pay.all', 'receive')
 
 print('****************** Daemon Ready ******************');
 
