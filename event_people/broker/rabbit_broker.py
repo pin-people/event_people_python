@@ -1,6 +1,6 @@
 import os
 import pika
-from pika.exceptions import AMQPConnectionError
+from pika.exceptions import AMQPConnectionError, StreamLostError
 
 from event_people.broker.rabbit.queue import Queue
 from event_people.broker.base import Base
@@ -11,15 +11,13 @@ class RabbitBroker(Base):
     RABBIT_URL = os.environ['RABBIT_URL']
 
     def get_connection(self):
-        if self.connection and not self.connection.is_closed:
-            return self.connection
-
         try:
-            self.connection = self._channel()
+            if self.connection and not self.connection.is_closed:
+                return self.connection.channel()
 
-            return self.connection
-        except AMQPConnectionError:
-            raise ValueError("Error connecting to Rabbit instance, check if the VHOST setting is correct and that it is created.")
+            return self._channel()
+        except (AMQPConnectionError, StreamLostError) as error:
+            return self._channel()
 
     def consume(self, event_name, callback, final_method_name=None, continuous=True):
         Queue.subscribe(self.get_connection(), event_name, continuous, callback, final_method_name)
@@ -36,9 +34,9 @@ class RabbitBroker(Base):
 
 
     def _channel(self):
-        connection = pika.BlockingConnection(self._parameters())
+        self.connection = pika.BlockingConnection(self._parameters())
 
-        return connection.channel()
+        return self.connection.channel()
 
     def _parameters(self):
         return pika.connection.URLParameters(self._full_url())

@@ -4,12 +4,13 @@ build-backend = "hatchling.build"
 
 [project]
 name = "event_people"
-version = "0.0.2"
+version = "0.0.3"
 authors = [
   { name="Pin People", email="tech@pinpeople.com.br" },
 ]
 description = "Tool to simplify the communication of event based services."
 readme = "README.md"
+dependencies = [ "pika" ]
 requires-python = ">=3.7"
 classifiers = [
     "Programming Language :: Python :: 3",

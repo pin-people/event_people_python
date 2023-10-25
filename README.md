@@ -18,7 +18,7 @@ As of today EventPeople uses RabbitMQ as its datasource, but there are plans to 
 Add this line to your project's `requirements.txt` file:
 
 ```text
-event_people>=0.0.2
+event_people>=0.0.3
 ```
 
 And then execute
