@@ -49,12 +49,13 @@ class Queue:
         context = Context(channel, delivery_info)
 
         try:
-            sig = inspect.signature(callback)
-            if len(sig.parameters) >= 3:
-                callback(event, context, final_method_name)
-            else:
-                callback(event, context)
-        except TypeError:
+            param_count = len(inspect.signature(callback).parameters)
+        except (ValueError, TypeError):
+            param_count = 2
+
+        if param_count >= 3:
+            callback(event, context, final_method_name)
+        else:
             callback(event, context)
 
         if not continuous:
