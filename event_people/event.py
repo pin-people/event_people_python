@@ -16,6 +16,16 @@ class Header:
         self.destination = destination
         self.schema_version = schema_version or 1.0
 
+    def to_dict(self):
+        return {
+            'appName': self.app,
+            'schemaVersion': self.schema_version,
+            'resource': self.resource,
+            'origin': self.origin,
+            'action': self.action,
+            'destination': self.destination,
+        }
+
     def __str__(self):
         return f'{self.app}.{self.resource}.{self.origin}.{self.action}.{self.destination}.{self.schema_version}'
 
@@ -50,4 +60,4 @@ class Event(object):
         return f'{name}.all' if len(name.split('.')) == 3 else name
 
     def payload(self):
-       return json.dumps({"headers": self.header.__dict__, "body": self.body})
+       return json.dumps({"headers": self.header.to_dict(), "body": self.body})
