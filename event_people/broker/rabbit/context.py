@@ -1,4 +1,4 @@
-class Context:
+class RabbitContext:
     """ Queue wrappper for python user"""
     def __init__(self, channel, delivery_info):
         self.channel = channel
@@ -12,3 +12,7 @@ class Context:
 
     def reject(self):
         self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
+
+
+# Backward-compatibility alias
+Context = RabbitContext

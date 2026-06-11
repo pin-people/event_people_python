@@ -1,6 +1,6 @@
 from event_people.broker.rabbit.queue import Queue
 from event_people.broker.rabbit_broker import RabbitBroker
-from event_people.broker.rabbit.context import Context
+from event_people.broker.rabbit.context import RabbitContext, Context
 from event_people.event import Event
 from event_people.listeners.base_listener import BaseListener
 from event_people.listeners.listener_manager import ListenerManager
