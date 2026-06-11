@@ -37,4 +37,16 @@ pending:
   - "Config.fullUrl (built per-request in RabbitBroker._full_url instead)"
 
 # Structural or naming departures from the spec
-deviations: []
+deviations:
+  - id: DEV-PY-001
+    component: Queue
+    file: "event_people/broker/rabbit/queue.py"
+    severity: high
+    description: >
+      _queue_name() normalizes the destination segment to 'all', producing queue names
+      ending in .all (e.g. {appName}-resource.origin.action.all).
+      Spec v2.0.0 requires the destination segment to be the consuming service's appName:
+      {appName}-resource.origin.action.{appName}.
+    fix: >
+      Replace the normalization to 'all' with normalization to APP_NAME.
+      Both routing keys (.all and .{appName}) must resolve to the same queue name.
