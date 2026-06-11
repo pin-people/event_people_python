@@ -7,13 +7,8 @@ class Emitter:
 
     def itrigger(self, events):
         broker = Config.get_broker()
-        channel = broker.get_connection()
+        broker.get_connection()
 
         broker.produce(events)
-
-        try:
-            channel.start_consuming()
-        finally:
-            channel.stop_consuming()
 
         return events
