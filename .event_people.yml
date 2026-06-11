@@ -1,5 +1,5 @@
 spec_version: "1.1.0"
-implementation_version: "0.1.1"
+implementation_version: "0.1.2"
 language: python
 package: "event_people (PyPI)"
 status: stable
@@ -18,9 +18,6 @@ implemented:
   - RabbitContext
   - Topic
   - Queue
-
-# Spec components not yet implemented (pending in spec too)
-pending:
   - RetryManager
   - "Event.retryCount"
   - "Event.incrementRetryCount"
@@ -34,6 +31,9 @@ pending:
   - "RabbitContext.maxRetries"
   - "RabbitContext.isLastRetry"
   - "RabbitContext.dlqName"
+
+# Spec components not yet implemented (pending in spec too)
+pending:
   - "Config.fullUrl (built per-request in RabbitBroker._full_url instead)"
 
 # Structural or naming departures from the spec

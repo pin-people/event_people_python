@@ -36,7 +36,7 @@ class Event(object):
     """
     APP_NAME = os.environ['RABBIT_EVENT_PEOPLE_APP_NAME']
 
-    def __init__(self, name, body, schema_version = 1.0):
+    def __init__(self, name, body, schema_version = 1.0, retry_count = 0):
         self.name = self.__fix_name__(name)
         self.__generate_header__(schema_version)
         body_dict = body
@@ -47,6 +47,10 @@ class Event(object):
         self.header.schema_version = schema_version
 
         self.body = body_dict if 'body' not in body_dict else body_dict['body']
+        self.retry_count = retry_count
+
+    def increment_retry_count(self):
+        self.retry_count += 1
 
 
     def __generate_header__(self, schema_version):
