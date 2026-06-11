@@ -4,11 +4,12 @@ from functools import partial
 from event_people.event import Event
 from .context import RabbitContext
 
+
 class Queue:
     TOPIC_NAME = os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME']
     APP_NAME = os.environ['RABBIT_EVENT_PEOPLE_APP_NAME']
 
-    """ Queue wrappper for python user"""
+    """ Queue wrapper for python user"""
     def __init__(self, channel):
         if channel is None:
             raise ValueError("Channel must be defined.")
@@ -17,36 +18,95 @@ class Queue:
         self._channel = channel
 
     @classmethod
-    def subscribe(cls, channel, event_name, continuous, callback, final_method_name=None):
-        cls(channel).isubscribe(event_name, continuous, callback, final_method_name)
+    def subscribe(cls, channel, event_name, continuous, callback,
+                  final_method_name=None, retry_params=None):
+        cls(channel).isubscribe(event_name, continuous, callback,
+                                final_method_name, retry_params)
 
-    def isubscribe(self, event_name, continuous, callback, final_method_name=None):
-        queue_name = self._define_queue(event_name)
+    def isubscribe(self, event_name, continuous, callback,
+                   final_method_name=None, retry_params=None):
+        retry_params = retry_params or {}
+        queue_name = self._define_queue(event_name, retry_params)
 
-        on_message_callback = partial(self._callback, args=(continuous, callback, final_method_name))
+        on_message_callback = partial(
+            self._callback,
+            args=(continuous, callback, final_method_name, queue_name, retry_params),
+        )
         self._channel.basic_consume(
             queue=queue_name, on_message_callback=on_message_callback, auto_ack=False)
 
-    def _define_queue(self, event_name):
+    def _define_queue(self, event_name, retry_params=None):
+        retry_params = retry_params or {}
         routing_key = '.'.join(event_name.split('.')[0:4])
-
         queue_name = self._queue_name(routing_key)
+
+        app_name = self.APP_NAME.lower()
+        dlx_name = f'{app_name}_dlx'
+        dlq_name = retry_params.get('dlq_name', f'{app_name}_dlq')
+
+        # Declare the main queue with dead-letter-exchange pointing to DLX
         self._channel.queue_declare(
-            queue_name, durable=True, exclusive=False)
+            queue_name,
+            durable=True,
+            exclusive=False,
+            arguments={'x-dead-letter-exchange': dlx_name},
+        )
 
         print(routing_key)
 
         self._channel.queue_bind(
             exchange=self.TOPIC_NAME, queue=queue_name, routing_key=routing_key)
 
+        # Declare DLX exchange (fanout, durable) — idempotent
+        self._channel.exchange_declare(
+            exchange=dlx_name,
+            exchange_type='fanout',
+            durable=True,
+        )
+
+        # Declare DLQ and bind to DLX — idempotent
+        self._channel.queue_declare(dlq_name, durable=True, exclusive=False)
+        self._channel.queue_bind(exchange=dlx_name, queue=dlq_name, routing_key='')
+
+        # Declare retry queue — messages expire back to the main queue via DLX
+        retry_queue_name = f'{queue_name}_retry'
+        self._channel.queue_declare(
+            retry_queue_name,
+            durable=True,
+            exclusive=False,
+            arguments={
+                'x-dead-letter-exchange': '',
+                'x-dead-letter-routing-key': queue_name,
+            },
+        )
+
         return queue_name
 
     def _callback(self, channel, delivery_info, properties, payload, args):
-        continuous, callback, final_method_name = args
+        continuous, callback, final_method_name, queue_name, retry_params = args
         event_name = delivery_info.routing_key
 
-        event = Event(event_name, payload)
-        context = RabbitContext(channel, delivery_info)
+        # Read retry count from AMQP header
+        retry_count = 0
+        if properties and properties.headers:
+            retry_count = int(properties.headers.get('x-event-people-retries', 0))
+
+        event = Event(event_name, payload, retry_count=retry_count)
+
+        max_retries = retry_params.get('max_retries', 3)
+        delay_strategy = retry_params.get('delay_strategy', 'exponential')
+
+        context = RabbitContext(
+            channel=channel,
+            delivery_info=delivery_info,
+            properties=properties,
+            queue_name=queue_name,
+            max_retries=max_retries,
+            delay_strategy=delay_strategy,
+            retry_count=retry_count,
+        )
+        context._body = payload
+        context.dlq_name = retry_params.get('dlq_name', f'{self.APP_NAME.lower()}_dlq')
 
         try:
             param_count = len(inspect.signature(callback).parameters)

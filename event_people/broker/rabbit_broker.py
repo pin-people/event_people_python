@@ -19,8 +19,9 @@ class RabbitBroker(Base):
         except (AMQPConnectionError, StreamLostError) as error:
             return self._channel()
 
-    def consume(self, event_name, callback, final_method_name=None, continuous=True):
-        Queue.subscribe(self.get_connection(), event_name, continuous, callback, final_method_name)
+    def consume(self, event_name, callback, final_method_name=None, continuous=True, retry_params=None):
+        Queue.subscribe(self.get_connection(), event_name, continuous, callback,
+                        final_method_name, retry_params=retry_params)
 
     def produce(self, events):
         events = events if hasattr(events, "__len__") else [events]
