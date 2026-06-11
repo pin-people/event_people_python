@@ -1,0 +1,46 @@
+spec_version: "1.0.0"
+implementation_version: "0.1.0"
+language: python
+package: "event_people (PyPI)"
+status: stable
+
+# Components fully implemented (with deviations/bugs noted separately)
+implemented:
+  - Config
+  - Event
+  - Listener
+  - Emitter
+  - Daemon
+  - BaseListener
+  - ListenersManager
+  - BaseBroker
+  - RabbitBroker
+  - RabbitContext
+  - Topic
+  - Queue
+
+# Spec components not yet implemented (pending in spec too)
+pending:
+  - RetryManager
+  - "Event.retryCount"
+  - "Event.incrementRetryCount"
+  - "Config.maxAttempts"
+  - "Config.delayStrategy"
+  - "Config.dlqName"
+  - "Config.getRetryConfig"
+  - "Listener.on (retry params: maxAttempts, delayStrategy, dlqName)"
+  - "Context.maxRetries"
+  - "Context.isLastRetry"
+  - "RabbitContext.maxRetries"
+  - "RabbitContext.isLastRetry"
+  - "RabbitContext.dlqName"
+  - "Config.fullUrl (built per-request in RabbitBroker._full_url instead)"
+
+# Structural or naming departures from the spec
+deviations:
+  - id: DEV-PY-001
+    component: RabbitContext
+    description: "Class is named 'Context' (in broker/rabbit/context.py) instead of 'RabbitContext'."
+    spec_defines: "RabbitContext"
+    implemented_as: "Context"
+    breaking: false
