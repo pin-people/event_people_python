@@ -2,7 +2,7 @@ import inspect
 import os
 from functools import partial
 from event_people.event import Event
-from .context import Context
+from .context import RabbitContext
 
 class Queue:
     TOPIC_NAME = os.environ['RABBIT_EVENT_PEOPLE_TOPIC_NAME']
@@ -46,7 +46,7 @@ class Queue:
         event_name = delivery_info.routing_key
 
         event = Event(event_name, payload)
-        context = Context(channel, delivery_info)
+        context = RabbitContext(channel, delivery_info)
 
         try:
             param_count = len(inspect.signature(callback).parameters)

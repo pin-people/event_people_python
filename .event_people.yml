@@ -37,10 +37,4 @@ pending:
   - "Config.fullUrl (built per-request in RabbitBroker._full_url instead)"
 
 # Structural or naming departures from the spec
-deviations:
-  - id: DEV-PY-001
-    component: RabbitContext
-    description: "Class is named 'Context' (in broker/rabbit/context.py) instead of 'RabbitContext'."
-    spec_defines: "RabbitContext"
-    implemented_as: "Context"
-    breaking: false
+deviations: []
