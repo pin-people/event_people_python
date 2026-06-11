@@ -1,3 +1,4 @@
+import inspect
 import os
 from functools import partial
 from event_people.event import Event
@@ -47,7 +48,14 @@ class Queue:
         event = Event(event_name, payload)
         context = Context(channel, delivery_info)
 
-        callback(event, context, final_method_name)
+        try:
+            sig = inspect.signature(callback)
+            if len(sig.parameters) >= 3:
+                callback(event, context, final_method_name)
+            else:
+                callback(event, context)
+        except TypeError:
+            callback(event, context)
 
         if not continuous:
             channel.stop_consuming()
