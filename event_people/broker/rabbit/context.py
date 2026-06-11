@@ -5,7 +5,7 @@ from event_people.broker.rabbit.retry_manager import RetryManager
 class RabbitContext:
     """ Queue wrapper for python user"""
     def __init__(self, channel, delivery_info, properties=None, queue_name=None,
-                 max_retries=3, delay_strategy='exponential', retry_count=0):
+                 max_retries=3, delay_strategy='exponential', retry_count=0, body=None):
         self.channel = channel
         self.delivery_info = delivery_info
         self.properties = properties
@@ -15,6 +15,7 @@ class RabbitContext:
         self.retry_count = retry_count
         self._retry_manager = RetryManager(max_retries, delay_strategy)
         self.dlq_name = None
+        self._body = body if body is not None else b''
 
     @property
     def is_last_retry(self):
@@ -33,11 +34,17 @@ class RabbitContext:
                 body=self._get_body(),
                 properties=pika.BasicProperties(
                     expiration=str(delay),
-                    headers={'x-event-people-retries': self.retry_count + 1},
+                    headers={'x-event-people-retries': int(self.retry_count + 1)},
                     delivery_mode=2,
                 ),
             )
-            self.channel.basic_ack(self.delivery_info.delivery_tag)
+            try:
+                self.channel.basic_ack(self.delivery_info.delivery_tag)
+            except Exception:
+                # Publish already succeeded; swallow ack errors to avoid masking
+                # the successful retry enqueue. The original message may be
+                # redelivered once more but that is safer than losing the retry.
+                pass
         else:
             self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
 
@@ -45,9 +52,7 @@ class RabbitContext:
         self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
 
     def _get_body(self):
-        # Retrieve the original body from the last delivery via the channel's
-        # latest frame — we store it when the context is constructed.
-        return self._body if hasattr(self, '_body') else b''
+        return self._body
 
 
 # Backward-compatibility alias

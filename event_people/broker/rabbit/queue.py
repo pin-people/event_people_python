@@ -52,8 +52,6 @@ class Queue:
             arguments={'x-dead-letter-exchange': dlx_name},
         )
 
-        print(routing_key)
-
         self._channel.queue_bind(
             exchange=self.TOPIC_NAME, queue=queue_name, routing_key=routing_key)
 
@@ -86,10 +84,15 @@ class Queue:
         continuous, callback, final_method_name, queue_name, retry_params = args
         event_name = delivery_info.routing_key
 
-        # Read retry count from AMQP header
+        # Read retry count from AMQP header — pika may deliver the value as int,
+        # float, or str depending on the AMQP type tag used by the publisher.
         retry_count = 0
         if properties and properties.headers:
-            retry_count = int(properties.headers.get('x-event-people-retries', 0))
+            raw = properties.headers.get('x-event-people-retries', 0)
+            try:
+                retry_count = max(0, int(float(raw)))
+            except (TypeError, ValueError):
+                retry_count = 0
 
         event = Event(event_name, payload, retry_count=retry_count)
 
@@ -104,8 +107,8 @@ class Queue:
             max_retries=max_retries,
             delay_strategy=delay_strategy,
             retry_count=retry_count,
+            body=payload,
         )
-        context._body = payload
         context.dlq_name = retry_params.get('dlq_name', f'{self.APP_NAME.lower()}_dlq')
 
         try:
