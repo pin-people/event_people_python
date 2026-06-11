@@ -1,6 +1,6 @@
 class Base:
     connection = None
-    consumers = []
+    consumers = {}
 
     def get_consumers(self):
         return self.consumers
