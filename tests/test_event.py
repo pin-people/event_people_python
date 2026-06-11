@@ -34,7 +34,7 @@ class TestEvent:
         resp = json.loads(event.payload())
 
         header = resp['headers']
-        assert header['app'] == 'service_name'
+        assert header['appName'] == 'service_name'
         assert header['resource'] == 'resource'
         assert header['origin'] == 'custom'
 
