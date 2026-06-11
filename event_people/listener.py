@@ -23,7 +23,7 @@ class Listener:
         }
 
         for queue_name in queue_names:
-            broker.consume(queue_name, broker_callback, False, retry_params=retry_params)
+            broker.consume(queue_name, broker_callback, continuous=False, retry_params=retry_params)
 
         try:
             channel.start_consuming()
