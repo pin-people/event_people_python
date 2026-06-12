@@ -229,6 +229,66 @@ Daemon.start()
 ```
 [See more details](https://github.com/pin-people/event_people_python/blob/master/examples/daemon.rb)
 
+## Retry and Dead Letter Queue (DLQ)
+
+### Environment variables
+
+| Variable | Description | Default |
+|---|---|---|
+| `RABBIT_EVENT_PEOPLE_MAX_RETRIES` | Max retry attempts before dead-lettering | `3` |
+| `RABBIT_EVENT_PEOPLE_RETRY_TTL_MS` | Base delay in ms for retry backoff | `1000` |
+
+### How it works
+
+On `context.fail()`:
+- If retries remain → message is published to `{queue}_retry` with exponential backoff delay, then acked
+- If retries exhausted → nacked to DLQ via RabbitMQ DLX
+
+On `context.reject()` → nacked directly to DLQ (no retries)
+
+**Delay strategies:**
+- `exponential` (default): `min(initialDelay × 5^retryCount, 600000)` ms
+- `fixed`: constant `initialDelay` ms
+
+### Queue topology (auto-created on subscribe)
+
+| Queue/Exchange | Name | Purpose |
+|---|---|---|
+| Exchange (DLX) | `{appName}_dlx` | Fanout, receives dead-lettered messages |
+| DLQ | `{appName}_dlq` | Final resting place for failed messages |
+| Retry queue | `{queue_name}_retry` | Holds messages until backoff delay expires |
+
+### Usage
+
+```python
+from event_people import Listener, Event
+
+def handle_event(event: Event, context):
+    print(f"Attempt {event.retry_count + 1} of {context.max_retries}")
+
+    if event.body.get("invalid"):
+        context.reject()   # → DLQ immediately, no retries
+        return
+
+    try:
+        process(event)
+        context.success()
+    except Exception:
+        if context.is_last_retry:
+            print("Final attempt failed, sending to DLQ")
+        context.fail()     # → retry queue (or DLQ if exhausted)
+
+# Per-listener retry config (overrides env var defaults)
+Listener.on("order.service.created", handle_event,
+            max_attempts=5,
+            delay_strategy="exponential")
+
+# Fixed delay
+Listener.on("user.service.updated", handle_event,
+            max_attempts=3,
+            delay_strategy="fixed")
+```
+
 ## Development
 
 After checking out the repo, run `bin/setup` to install dependencies. Then, run `bin/test` to run the tests.
