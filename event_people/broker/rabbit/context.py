@@ -28,23 +28,26 @@ class RabbitContext:
         if self._retry_manager.should_retry(self.retry_count):
             delay = self._retry_manager.get_next_delay(self.retry_count)
             retry_queue_name = f'{self.queue_name}_retry'
-            self.channel.basic_publish(
-                exchange='',
-                routing_key=retry_queue_name,
-                body=self._get_body(),
-                properties=pika.BasicProperties(
-                    expiration=str(delay),
-                    headers={'x-event-people-retries': int(self.retry_count + 1)},
-                    delivery_mode=2,
-                ),
-            )
             try:
-                self.channel.basic_ack(self.delivery_info.delivery_tag)
+                self.channel.basic_publish(
+                    exchange='',
+                    routing_key=retry_queue_name,
+                    body=self._get_body(),
+                    properties=pika.BasicProperties(
+                        expiration=str(delay),
+                        headers={'x-event-people-retries': int(self.retry_count + 1)},
+                        delivery_mode=2,
+                    ),
+                )
+                try:
+                    self.channel.basic_ack(self.delivery_info.delivery_tag)
+                except Exception:
+                    # Publish already succeeded; swallow ack errors to avoid masking
+                    # the successful retry enqueue. The original message may be
+                    # redelivered once more but that is safer than losing the retry.
+                    pass
             except Exception:
-                # Publish already succeeded; swallow ack errors to avoid masking
-                # the successful retry enqueue. The original message may be
-                # redelivered once more but that is safer than losing the retry.
-                pass
+                self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
         else:
             self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
 
