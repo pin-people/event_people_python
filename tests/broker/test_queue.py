@@ -59,14 +59,20 @@ class TestQueue:
 
     def test_callback_subscribe_sucessffuly(self, setup):
         from event_people import RabbitBroker
-        from event_people import Context
         from event_people import Queue
+        import pika as _pika
 
         with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             rabbit = RabbitBroker()
             channel = rabbit.get_connection()
+            queue_instance = Queue(channel)
             delivery_tag = Basic.Deliver('consumer_tag_')
-            delivery_tag.routing_key = 'resource.custom.pay'
+            delivery_tag.routing_key = 'resource.custom.pay.all'
             body = { 'amount': 350, 'name': 'George' }
-            context = Context(channel, delivery_tag)
-            Queue._callback(None, channel=channel, delivery_info= delivery_tag, properties=context, payload=body, args=[False, TestQueue.callback, 'callback'])
+            properties = _pika.BasicProperties(headers={})
+            queue_name = 'service_name-resource.custom.pay.all'
+            retry_params = {'max_retries': 3, 'initial_delay': 1000, 'delay_strategy': 'exponential',
+                            'dlq_name': 'service_name_dlq'}
+            queue_instance._callback(channel=channel, delivery_info=delivery_tag,
+                                     properties=properties, payload=body,
+                                     args=[False, TestQueue.callback, None, queue_name, retry_params])

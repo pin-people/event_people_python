@@ -52,6 +52,13 @@ class Event(object):
     def increment_retry_count(self):
         self.retry_count += 1
 
+    def has_body(self):
+        """Return True when the event body is a non-empty dict."""
+        return bool(self.body)
+
+    def has_name(self):
+        """Return True when the event name is a non-empty string."""
+        return bool(self.name)
 
     def __generate_header__(self, schema_version):
         resource, origin, action, destination = self.name.split(".")

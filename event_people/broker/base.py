@@ -18,3 +18,6 @@ class Base:
     @classmethod
     def produce(cls, events):
         cls().produce(events)
+
+    def close_connection(self):
+        raise NotImplementedError('Must be implemented') #pragma: no cover

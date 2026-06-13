@@ -75,3 +75,40 @@ class TestRabbitBroker:
             event = Event(event_name, body, schema_version)
 
             rabbit.produce(event)
+
+    def test_close_connection_closes_open_connection(self, setup):
+        """close_connection() must close the underlying pika connection when open."""
+        from event_people import RabbitBroker
+
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection) as MockConn:
+            rabbit = RabbitBroker()
+            mock_conn = MockConn.return_value
+            mock_conn.is_closed = False
+            rabbit.connection = mock_conn
+
+            rabbit.close_connection()
+
+            mock_conn.close.assert_called_once()
+
+    def test_close_connection_skips_already_closed(self, setup):
+        """close_connection() must not raise when connection is already closed."""
+        from event_people import RabbitBroker
+
+        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection) as MockConn:
+            rabbit = RabbitBroker()
+            mock_conn = MockConn.return_value
+            mock_conn.is_closed = True
+            rabbit.connection = mock_conn
+
+            rabbit.close_connection()  # should not raise
+
+            mock_conn.close.assert_not_called()
+
+    def test_close_connection_with_no_connection(self, setup):
+        """close_connection() must handle None connection gracefully."""
+        from event_people import RabbitBroker
+
+        rabbit = RabbitBroker()
+        rabbit.connection = None
+
+        rabbit.close_connection()  # should not raise
