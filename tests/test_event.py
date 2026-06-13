@@ -50,3 +50,27 @@ class TestEvent:
         resp = json.loads(event.payload())
 
         assert resp['body'] == body
+
+    def test_has_body_returns_true_when_body_present(self, setup):
+        from event_people import Event
+        event = Event(name='resource.custom.receive', body={'amount': 10})
+        assert event.has_body() is True
+
+    def test_has_body_returns_false_when_body_empty(self, setup):
+        from event_people import Event
+        event = Event(name='resource.custom.receive', body={})
+        assert event.has_body() is False
+
+    def test_has_name_returns_true_when_name_present(self, setup):
+        from event_people import Event
+        event = Event(name='resource.custom.receive', body={})
+        assert event.has_name() is True
+
+    def test_increment_retry_count(self, setup):
+        from event_people import Event
+        event = Event(name='resource.custom.receive', body={})
+        assert event.retry_count == 0
+        event.increment_retry_count()
+        assert event.retry_count == 1
+        event.increment_retry_count()
+        assert event.retry_count == 2

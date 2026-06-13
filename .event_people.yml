@@ -1,5 +1,5 @@
-spec_version: "1.1.1"
-implementation_version: "0.1.3"
+spec_version: "1.2.0"
+implementation_version: "0.2.0"
 language: python
 package: "event_people (PyPI)"
 status: stable
@@ -22,19 +22,43 @@ implemented:
   - "Event.retryCount"
   - "Event.incrementRetryCount"
   - "Config.maxAttempts"
+  - "Config.initialDelay"
   - "Config.delayStrategy"
   - "Config.dlqName"
   - "Config.getRetryConfig"
-  - "Listener.on (retry params: maxAttempts, delayStrategy, dlqName)"
+  - "Config.configure"
+  - "Listener.on (signature: on(eventName, callback) — v1.2.0)"
+  - "BaseListener class-level retry attributes: maxAttempts, initialDelay, delayStrategy, dlqName"
+  - "BaseListener.context (instance accessor, injected by Queue._callback)"
+  - "BaseListener.callback (signature: callback(function, event, context) — v1.2.0, documented as DEV-PY-002)"
   - "Context.maxRetries"
   - "Context.isLastRetry"
   - "RabbitContext.maxRetries"
   - "RabbitContext.isLastRetry"
   - "RabbitContext.dlqName"
+  - "Event.has_body"
+  - "Event.has_name"
+  - "Daemon.stop"
+  - "Daemon.bind_signals"
+  - "BaseBroker.close_connection"
+  - "RabbitBroker.close_connection"
 
 # Spec components not yet implemented (pending in spec too)
 pending:
   - "Config.fullUrl (built per-request in RabbitBroker._full_url instead)"
 
 # Structural or naming departures from the spec
-deviations: []
+deviations:
+  - id: DEV-PY-002
+    component: BaseListener
+    method: callback
+    spec_signature: "callback(function, event)"
+    impl_signature: "callback(function, event, context=None)"
+    reason: >
+      Queue._callback injects the RabbitContext as the third positional argument so that
+      BaseListener.callback can set self.context on the instance before dispatching to the
+      handler method. The extra parameter is optional (defaults to None) and does not break
+      callers that pass only (function, event). Bringing the signature to spec would require
+      a separate context-injection mechanism (e.g. a thread-local or a dedicated inject method)
+      and is deferred to a future minor release.
+    status: documented
