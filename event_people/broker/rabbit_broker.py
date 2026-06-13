@@ -42,5 +42,10 @@ class RabbitBroker(Base):
     def _parameters(self):
         return pika.connection.URLParameters(self._full_url())
 
+    def close_connection(self):
+        """Close the RabbitMQ connection if open."""
+        if self.connection and not self.connection.is_closed:
+            self.connection.close()
+
     def _full_url(self):
         return f'{self.RABBIT_URL}/{self.VHOST}'

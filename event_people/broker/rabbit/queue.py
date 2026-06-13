@@ -98,6 +98,7 @@ class Queue:
 
         max_retries = retry_params.get('max_retries', 3)
         delay_strategy = retry_params.get('delay_strategy', 'exponential')
+        initial_delay = retry_params.get('initial_delay', 1000)
 
         context = RabbitContext(
             channel=channel,
@@ -106,20 +107,25 @@ class Queue:
             queue_name=queue_name,
             max_retries=max_retries,
             delay_strategy=delay_strategy,
+            initial_delay=initial_delay,
             retry_count=retry_count,
             body=payload,
         )
         context.dlq_name = retry_params.get('dlq_name', f'{self.APP_NAME.lower()}_dlq')
 
-        try:
-            param_count = len(inspect.signature(callback).parameters)
-        except (ValueError, TypeError):
-            param_count = 2
-
-        if param_count >= 3:
-            callback(event, context, final_method_name)
+        if final_method_name is not None:
+            # Dispatch via BaseListener.callback(function, event, context) — v1.2.0
+            callback(final_method_name, event, context)
         else:
-            callback(event, context)
+            try:
+                param_count = len(inspect.signature(callback).parameters)
+            except (ValueError, TypeError):
+                param_count = 2
+
+            if param_count >= 3:
+                callback(event, context, final_method_name)
+            else:
+                callback(event, context)
 
         if not continuous:
             channel.stop_consuming()

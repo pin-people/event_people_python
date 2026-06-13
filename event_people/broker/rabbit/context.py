@@ -5,15 +5,17 @@ from event_people.broker.rabbit.retry_manager import RetryManager
 class RabbitContext:
     """ Queue wrapper for python user"""
     def __init__(self, channel, delivery_info, properties=None, queue_name=None,
-                 max_retries=3, delay_strategy='exponential', retry_count=0, body=None):
+                 max_retries=3, delay_strategy='exponential', initial_delay=1000,
+                 retry_count=0, body=None):
         self.channel = channel
         self.delivery_info = delivery_info
         self.properties = properties
         self.queue_name = queue_name
         self.max_retries = max_retries
         self.delay_strategy = delay_strategy
+        self.initial_delay = initial_delay
         self.retry_count = retry_count
-        self._retry_manager = RetryManager(max_retries, delay_strategy)
+        self._retry_manager = RetryManager(max_retries, delay_strategy, initial_delay)
         self.dlq_name = None
         self._body = body if body is not None else b''
 

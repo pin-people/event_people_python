@@ -39,7 +39,11 @@ export RABBIT_URL='amqp://guest:guest@localhost:5672'
 export RABBIT_EVENT_PEOPLE_APP_NAME='service_name'
 export RABBIT_EVENT_PEOPLE_VHOST='event_people'
 export RABBIT_EVENT_PEOPLE_TOPIC_NAME='event_people'
-````
+```
+
+> **Note:** `RABBIT_EVENT_PEOPLE_MAX_RETRIES` and `RABBIT_EVENT_PEOPLE_RETRY_TTL_MS`
+> were removed in v1.2.0. Retry settings are now configured via `Config.configure()`
+> or per-listener class attributes — see the [Retry and DLQ](#retry-and-dead-letter-queue-dlq) section.
 
 ## Usage
 
@@ -231,18 +235,53 @@ Daemon.start()
 
 ## Retry and Dead Letter Queue (DLQ)
 
-### Environment variables
+### Configuration
 
-| Variable | Description | Default |
-|---|---|---|
-| `RABBIT_EVENT_PEOPLE_MAX_RETRIES` | Max retry attempts before dead-lettering | `3` |
-| `RABBIT_EVENT_PEOPLE_RETRY_TTL_MS` | Base delay in ms for retry backoff | `1000` |
+Retry behaviour is configured in code — the old env vars
+`RABBIT_EVENT_PEOPLE_MAX_RETRIES` and `RABBIT_EVENT_PEOPLE_RETRY_TTL_MS` were
+removed in v1.2.0.
+
+**Global defaults via `Config.configure()`** (optional — hardcoded defaults apply when not called):
+
+```python
+from event_people import Config
+
+Config.configure({
+    'max_attempts': 5,       # default: 3
+    'initial_delay': 2000,   # base delay in ms, default: 1000
+    'delay_strategy': 'exponential',  # 'exponential' or 'fixed', default: 'exponential'
+    'dlq_name': 'my_dlq',   # default: '{appName}_dlq'
+})
+```
+
+**Per-listener overrides** via class attributes (override Config defaults for that specific listener):
+
+```python
+from event_people import BaseListener
+
+class OrderListener(BaseListener):
+    max_attempts = 5
+    initial_delay = 2000
+    delay_strategy = 'exponential'
+
+    def handle(self, event):
+        try:
+            process(event)
+            self.success()
+        except Exception:
+            if self.context.is_last_retry:
+                print("Final attempt failed, sending to DLQ")
+            self.fail()
+
+OrderListener.bind_event('order.service.created', 'handle')
+```
 
 ### How it works
 
 On `context.fail()`:
-- If retries remain → message is published to `{queue}_retry` with exponential backoff delay, then acked
+- If retries remain → message is published to `{queue}_retry` with backoff delay, then acked
 - If retries exhausted → nacked to DLQ via RabbitMQ DLX
+- If publish to retry queue fails (broker down) → nacked to DLQ (never requeued to avoid infinite loops)
 
 On `context.reject()` → nacked directly to DLQ (no retries)
 
@@ -258,7 +297,7 @@ On `context.reject()` → nacked directly to DLQ (no retries)
 | DLQ | `{appName}_dlq` | Final resting place for failed messages |
 | Retry queue | `{queue_name}_retry` | Holds messages until backoff delay expires |
 
-### Usage
+### Usage with `Listener.on`
 
 ```python
 from event_people import Listener, Event
@@ -278,15 +317,7 @@ def handle_event(event: Event, context):
             print("Final attempt failed, sending to DLQ")
         context.fail()     # → retry queue (or DLQ if exhausted)
 
-# Per-listener retry config (overrides env var defaults)
-Listener.on("order.service.created", handle_event,
-            max_attempts=5,
-            delay_strategy="exponential")
-
-# Fixed delay
-Listener.on("user.service.updated", handle_event,
-            max_attempts=3,
-            delay_strategy="fixed")
+Listener.on("order.service.created", handle_event)
 ```
 
 ## Development

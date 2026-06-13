@@ -13,7 +13,14 @@ class ListenerManager:
         broker = Config.get_broker()
 
         for listener in cls._listeners:
-            broker.consume(listener.event_name, listener.listener_class.callback, final_method_name=listener.callback)
+            # Resolve retry params from listener class attributes > Config defaults
+            retry_params = listener.listener_class._resolve_retry_params()
+            broker.consume(
+                listener.event_name,
+                listener.listener_class.callback,
+                final_method_name=listener.callback,
+                retry_params=retry_params,
+            )
 
 
 class ListenerConfiguration:
