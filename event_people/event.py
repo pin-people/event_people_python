@@ -41,12 +41,14 @@ class Event(object):
         self.__generate_header__(schema_version)
         body_dict = body
 
-        if not isinstance(body, dict):
+        if body is None:
+            body_dict = None
+        elif not isinstance(body, dict):
             body_dict = ast.literal_eval(body.decode('utf-8'))
 
         self.header.schema_version = schema_version
 
-        self.body = body_dict if 'body' not in body_dict else body_dict['body']
+        self.body = None if body_dict is None else (body_dict if 'body' not in body_dict else body_dict['body'])
         self.retry_count = retry_count
 
     def increment_retry_count(self):
