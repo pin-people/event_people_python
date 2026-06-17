@@ -22,9 +22,11 @@ class Daemon:
     def stop(cls):
         """Close broker connection and terminate the process."""
         broker = Config.broker
-        if broker is not None:
-            broker.close_connection()
-        sys.exit(0)
+        try:
+            if broker is not None:
+                broker.close_connection()
+        finally:
+            sys.exit(0)
 
     @classmethod
     def bind_signals(cls):

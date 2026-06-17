@@ -36,13 +36,25 @@ class Config:
         if options is None:
             return
         if 'max_attempts' in options:
-            cls.MAX_ATTEMPTS = options['max_attempts']
+            val = options['max_attempts']
+            if not isinstance(val, int) or val < 1:
+                raise ValueError("max_attempts must be an integer >= 1")
+            cls.MAX_ATTEMPTS = val
         if 'initial_delay' in options:
-            cls.INITIAL_DELAY = options['initial_delay']
+            val = options['initial_delay']
+            if not isinstance(val, int) or val < 0:
+                raise ValueError("initial_delay must be an integer >= 0")
+            cls.INITIAL_DELAY = val
         if 'delay_strategy' in options:
-            cls.DELAY_STRATEGY = options['delay_strategy']
+            val = options['delay_strategy']
+            if val not in ('exponential', 'fixed'):
+                raise ValueError("delay_strategy must be 'exponential' or 'fixed'")
+            cls.DELAY_STRATEGY = val
         if 'dlq_name' in options:
-            cls.DLQ_NAME = options['dlq_name']
+            val = options['dlq_name']
+            if val is not None and (not isinstance(val, str) or val == ''):
+                raise ValueError("dlq_name must be a non-empty string or None")
+            cls.DLQ_NAME = val
 
     @classmethod
     def get_broker(cls):

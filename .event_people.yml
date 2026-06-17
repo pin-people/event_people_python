@@ -27,7 +27,7 @@ implemented:
   - "Config.dlqName"
   - "Config.getRetryConfig"
   - "Config.configure"
-  - "Listener.on (signature: on(eventName, callback) — v1.2.0)"
+  - "Listener.on (signature: on(event_name, callback) — v1.2.0)"
   - "BaseListener class-level retry attributes: maxAttempts, initialDelay, delayStrategy, dlqName"
   - "BaseListener.context (instance accessor, injected by Queue._callback)"
   - "BaseListener.callback (signature: callback(function, event, context) — v1.2.0, documented as DEV-PY-002)"

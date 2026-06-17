@@ -53,8 +53,8 @@ class Event(object):
         self.retry_count += 1
 
     def has_body(self):
-        """Return True when the event body is a non-empty dict."""
-        return bool(self.body)
+        """Return True when the event body is not None."""
+        return self.body is not None
 
     def has_name(self):
         """Return True when the event name is a non-empty string."""
