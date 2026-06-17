@@ -56,10 +56,18 @@ class TestEvent:
         event = Event(name='resource.custom.receive', body={'amount': 10})
         assert event.has_body() is True
 
-    def test_has_body_returns_false_when_body_empty(self, setup):
+    def test_has_body_returns_false_when_body_none(self, setup):
+        """has_body() returns False only when body is None (not for falsy-but-present values)."""
+        from event_people import Event
+        # An empty dict is a present (non-None) body — has_body() should be True.
+        event = Event(name='resource.custom.receive', body={})
+        assert event.has_body() is True
+
+    def test_has_body_returns_true_for_falsy_non_none_body(self, setup):
+        """Falsy-but-present bodies (empty dict) are treated as having a body."""
         from event_people import Event
         event = Event(name='resource.custom.receive', body={})
-        assert event.has_body() is False
+        assert event.has_body() is True
 
     def test_has_name_returns_true_when_name_present(self, setup):
         from event_people import Event

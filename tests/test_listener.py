@@ -44,9 +44,9 @@ class TestListener:
         """Retry config comes from Config defaults, not env vars (v1.2.0 change)."""
         from event_people import Listener, Config
         import os
-        # Ensure old env vars are NOT set — should not affect behaviour
-        assert 'RABBIT_EVENT_PEOPLE_MAX_RETRIES' not in os.environ
-        assert 'RABBIT_EVENT_PEOPLE_RETRY_TTL_MS' not in os.environ
+        # Ensure old env vars are not set — should not affect behaviour
+        os.environ.pop('RABBIT_EVENT_PEOPLE_MAX_RETRIES', None)
+        os.environ.pop('RABBIT_EVENT_PEOPLE_RETRY_TTL_MS', None)
 
         with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
             # Should succeed using hardcoded defaults from Config
