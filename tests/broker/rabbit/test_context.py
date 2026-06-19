@@ -1,6 +1,5 @@
 import mock
 from pika.spec import Basic
-import pika
 
 
 class TestContext:
