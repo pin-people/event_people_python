@@ -51,10 +51,32 @@ class RabbitContext:
             except Exception:
                 self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
         else:
-            self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
+            # Retries exhausted: publish the message to the application-level DLQ
+            # and ack. On publish failure fall back to nack(requeue=False) to
+            # avoid an infinite redelivery loop on the main queue.
+            self._dead_letter()
 
     def reject(self):
-        self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
+        # Reject routes directly to the application-level DLQ without retrying.
+        self._dead_letter()
+
+    def _dead_letter(self):
+        if not self.dlq_name:
+            self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
+            return
+        try:
+            self.channel.basic_publish(
+                exchange='',
+                routing_key=self.dlq_name,
+                body=self._get_body(),
+                properties=pika.BasicProperties(
+                    headers={'x-event-people-retries': int(self.retry_count)},
+                    delivery_mode=2,
+                ),
+            )
+            self.channel.basic_ack(self.delivery_info.delivery_tag)
+        except Exception:
+            self.channel.basic_nack(self.delivery_info.delivery_tag, requeue=False)
 
     def _get_body(self):
         return self._body
