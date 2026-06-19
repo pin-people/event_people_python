@@ -41,30 +41,27 @@ class Queue:
         queue_name = self._queue_name(routing_key)
 
         app_name = self.APP_NAME.lower()
-        dlx_name = f'{app_name}_dlx'
         dlq_name = retry_params.get('dlq_name', f'{app_name}_dlq')
 
-        # Declare the main queue with dead-letter-exchange pointing to DLX
+        # Declare the main queue WITHOUT a dead-letter-exchange argument.
+        # Dead-lettering is handled at the application level (see RabbitContext:
+        # reject and retry exhaustion publish to the DLQ). Keeping the main queue
+        # argument-free means upgrades over legacy queues never hit
+        # PRECONDITION_FAILED on redeclare.
         self._channel.queue_declare(
             queue_name,
             durable=True,
             exclusive=False,
-            arguments={'x-dead-letter-exchange': dlx_name},
         )
 
         self._channel.queue_bind(
             exchange=self.TOPIC_NAME, queue=queue_name, routing_key=routing_key)
 
-        # Declare DLX exchange (fanout, durable) — idempotent
-        self._channel.exchange_declare(
-            exchange=dlx_name,
-            exchange_type='fanout',
-            durable=True,
-        )
-
-        # Declare DLQ and bind to DLX — idempotent
+        # Declare the application-level DLQ as a plain durable queue — idempotent.
+        # No DLX fanout exchange or binding: the library publishes failed messages
+        # to it directly (see RabbitContext), so there is no broker-side topology
+        # to drift between library versions.
         self._channel.queue_declare(dlq_name, durable=True, exclusive=False)
-        self._channel.queue_bind(exchange=dlx_name, queue=dlq_name, routing_key='')
 
         # Declare retry queue — messages expire back to the main queue via DLX
         retry_queue_name = f'{queue_name}_retry'
