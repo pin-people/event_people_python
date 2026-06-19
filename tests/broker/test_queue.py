@@ -1,6 +1,5 @@
 import pytest
-from mock import patch
-import mock
+from mock import patch, MagicMock
 import pika
 
 from pika.spec import Basic
@@ -64,7 +63,7 @@ class TestQueue:
         queue and there is no DLX fanout exchange or binding."""
         from event_people import Queue
 
-        channel = mock.MagicMock()
+        channel = MagicMock()
         q = Queue(channel)
         q._define_queue('resource.custom.pay.all', retry_params={})
 
