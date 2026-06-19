@@ -3,6 +3,9 @@ implementation_version: "0.2.0"
 language: python
 package: "event_people (PyPI)"
 status: stable
+# Dead-lettering is application-level (spec v1.1.1): the main queue is declared
+# argument-free and the library publishes failed messages directly to a plain
+# <app>_dlq queue. No broker dead-letter-exchange.
 
 # Components fully implemented (with deviations/bugs noted separately)
 implemented:

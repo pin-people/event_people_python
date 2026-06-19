@@ -278,12 +278,17 @@ OrderListener.bind_event('order.service.created', 'handle')
 
 ### How it works
 
+Dead-lettering is **application-level**: the main queue is declared without any
+dead-letter argument, and the library **publishes** failed messages directly to a
+plain `{appName}_dlq` queue (via the default exchange) and acks. There is no broker
+dead-letter-exchange.
+
 On `context.fail()`:
 - If retries remain → message is published to `{queue}_retry` with backoff delay, then acked
-- If retries exhausted → nacked to DLQ via RabbitMQ DLX
-- If publish to retry queue fails (broker down) → nacked to DLQ (never requeued to avoid infinite loops)
+- If retries exhausted → published to `{appName}_dlq` then acked (falls back to `nack(requeue=False)` if no DLQ is configured or the publish fails)
+- If publish to retry queue fails (broker down) → `nack(requeue=False)` (never requeued to avoid infinite loops)
 
-On `context.reject()` → nacked directly to DLQ (no retries)
+On `context.reject()` → published directly to `{appName}_dlq` then acked, no retries (falls back to `nack(requeue=False)` if no DLQ is configured or the publish fails)
 
 **Delay strategies:**
 - `exponential` (default): `min(initialDelay × 5^retryCount, 600000)` ms
@@ -291,11 +296,30 @@ On `context.reject()` → nacked directly to DLQ (no retries)
 
 ### Queue topology (auto-created on subscribe)
 
-| Queue/Exchange | Name | Purpose |
+| Queue | Name | Purpose |
 |---|---|---|
-| Exchange (DLX) | `{appName}_dlx` | Fanout, receives dead-lettered messages |
-| DLQ | `{appName}_dlq` | Final resting place for failed messages |
-| Retry queue | `{queue_name}_retry` | Holds messages until backoff delay expires |
+| Main queue | `{appName}-{routingKey}` | Declared argument-free (no dead-letter-exchange) |
+| DLQ | `{appName}_dlq` | Plain durable queue; the library publishes failed messages to it |
+| Retry queue | `{queue_name}_retry` | Holds messages until backoff delay expires, then routes back to the main queue |
+
+### Migration from the broker-DLX version (not drop-in)
+
+Versions ≤ 0.1.x declared the main queue **with** an immutable
+`x-dead-letter-exchange = {appName}_dlx` argument (spec v1.1.0) plus a `{appName}_dlx`
+fanout exchange and a bound `{appName}_dlq`. Upgrading to the application-level design
+(this version) declares the main queue argument-free, which is **inequivalent** to the
+existing queue — the first redeclare raises `PRECONDITION_FAILED`.
+
+Upgrading is therefore **not drop-in**. Per environment, once:
+
+1. Stop the consumer.
+2. Delete the argument-bearing main queue(s). The `{appName}_dlx` fanout exchange and
+   the broker-bound binding may also be removed; the plain `{appName}_dlq` queue can
+   be kept.
+3. Start the new consumer — it redeclares the main queue argument-free.
+
+After this one-time cleanup all future upgrades are drop-in. See the platform
+`COMPATIBILITY.md` (spec v1.1.0 → v1.1.1) for the full contract.
 
 ### Usage with `Listener.on`
 
