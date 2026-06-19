@@ -104,8 +104,8 @@ class TestContext:
         _, kwargs = channel.basic_publish.call_args
         assert kwargs['properties'].expiration == '500'
 
-    def test_fail_exhausted_retries_nacks_without_requeue(self, setup):
-        """fail() with retries exhausted must nack(requeue=False) — never requeue=True."""
+    def test_fail_exhausted_retries_no_dlq_nacks_without_requeue(self, setup):
+        """fail() exhausted with no DLQ configured must nack(requeue=False)."""
         from event_people.broker.rabbit.context import RabbitContext
         channel = mock.MagicMock()
         delivery_tag = Basic.Deliver('consumer_tag_')
@@ -117,10 +117,80 @@ class TestContext:
             retry_count=3,  # exhausted
             body=b'{}',
         )
+        # dlq_name defaults to None → no app-level DLQ target
         ctx.fail()
 
         channel.basic_nack.assert_called_once_with(99, requeue=False)
         channel.basic_publish.assert_not_called()
+
+    def test_fail_exhausted_retries_publishes_to_dlq_and_acks(self, setup):
+        """fail() exhausted with a DLQ configured publishes to the DLQ then acks."""
+        from event_people.broker.rabbit.context import RabbitContext
+        channel = mock.MagicMock()
+        delivery_tag = Basic.Deliver('consumer_tag_')
+        delivery_tag.delivery_tag = 7
+
+        ctx = RabbitContext(
+            channel, delivery_tag,
+            max_retries=3,
+            retry_count=3,  # exhausted
+            body=b'{"x":1}',
+        )
+        ctx.dlq_name = 'service_name_dlq'
+        ctx.fail()
+
+        channel.basic_publish.assert_called_once()
+        _, kwargs = channel.basic_publish.call_args
+        assert kwargs['exchange'] == ''
+        assert kwargs['routing_key'] == 'service_name_dlq'
+        assert kwargs['body'] == b'{"x":1}'
+        channel.basic_ack.assert_called_once_with(7)
+        channel.basic_nack.assert_not_called()
+
+    def test_reject_publishes_to_dlq_and_acks(self, setup):
+        """reject() publishes the message to the app-level DLQ then acks."""
+        from event_people.broker.rabbit.context import RabbitContext
+        channel = mock.MagicMock()
+        delivery_tag = Basic.Deliver('consumer_tag_')
+        delivery_tag.delivery_tag = 11
+
+        ctx = RabbitContext(channel, delivery_tag, retry_count=0, body=b'{}')
+        ctx.dlq_name = 'service_name_dlq'
+        ctx.reject()
+
+        channel.basic_publish.assert_called_once()
+        _, kwargs = channel.basic_publish.call_args
+        assert kwargs['exchange'] == ''
+        assert kwargs['routing_key'] == 'service_name_dlq'
+        channel.basic_ack.assert_called_once_with(11)
+        channel.basic_nack.assert_not_called()
+
+    def test_reject_no_dlq_nacks_without_requeue(self, setup):
+        """reject() with no DLQ configured falls back to nack(requeue=False)."""
+        from event_people.broker.rabbit.context import RabbitContext
+        channel = mock.MagicMock()
+        delivery_tag = Basic.Deliver('consumer_tag_')
+        delivery_tag.delivery_tag = 5
+
+        ctx = RabbitContext(channel, delivery_tag, body=b'{}')
+        ctx.reject()
+
+        channel.basic_nack.assert_called_once_with(5, requeue=False)
+        channel.basic_publish.assert_not_called()
+
+    def test_reject_dlq_publish_failure_nacks_without_requeue(self, setup):
+        """reject() with a DLQ but a failing publish must nack(requeue=False)."""
+        from event_people.broker.rabbit.context import RabbitContext
+        channel = mock.MagicMock()
+        channel.basic_publish.side_effect = Exception("broker down")
+        delivery_tag = Basic.Deliver('consumer_tag_')
+        delivery_tag.delivery_tag = 8
+
+        ctx = RabbitContext(channel, delivery_tag, body=b'{}')
+        ctx.dlq_name = 'service_name_dlq'
+        ctx.reject()
+
+        channel.basic_nack.assert_called_once_with(8, requeue=False)
 
     def test_fail_publish_error_nacks_without_requeue(self, setup):
         """When publish fails, must nack(requeue=False) — not requeue=True (SOPHIA-1G)."""

@@ -1,5 +1,6 @@
 import pytest
 from mock import patch
+import mock
 import pika
 
 from pika.spec import Basic
@@ -56,6 +57,39 @@ class TestQueue:
             rabbit = RabbitBroker()
             channel = rabbit.get_connection()
             Queue.subscribe(channel, 'resource.custom.recieve.action', False, TestQueue.callback)
+
+    def test_main_queue_declared_without_dead_letter_argument(self, setup):
+        """The main queue must be declared argument-free (no x-dead-letter-exchange),
+        so upgrades over legacy queues never PRECONDITION_FAIL. The DLQ is a plain
+        queue and there is no DLX fanout exchange or binding."""
+        from event_people import Queue
+
+        channel = mock.MagicMock()
+        q = Queue(channel)
+        q._define_queue('resource.custom.pay.all', retry_params={})
+
+        # The main queue declare must carry no x-dead-letter-exchange argument.
+        main_queue = 'service_name-resource.custom.pay.all'
+        declare_calls = {
+            c.args[0]: c.kwargs for c in channel.queue_declare.call_args_list
+        }
+        assert main_queue in declare_calls
+        assert 'arguments' not in declare_calls[main_queue], \
+            "main queue must be declared without arguments"
+
+        # The DLQ must be a plain durable queue (no DLX argument/binding).
+        assert 'service_name_dlq' in declare_calls
+        assert 'arguments' not in declare_calls['service_name_dlq']
+
+        # No DLX fanout exchange must be declared.
+        channel.exchange_declare.assert_not_called()
+
+        # The retry queue keeps its dead-letter routing back to the main queue.
+        retry_queue = f'{main_queue}_retry'
+        assert retry_queue in declare_calls
+        retry_args = declare_calls[retry_queue]['arguments']
+        assert retry_args['x-dead-letter-exchange'] == ''
+        assert retry_args['x-dead-letter-routing-key'] == main_queue
 
     def test_callback_subscribe_sucessffuly(self, setup):
         from event_people import RabbitBroker
