@@ -81,3 +81,42 @@ class TestEvent:
         assert event.retry_count == 1
         event.increment_retry_count()
         assert event.retry_count == 2
+    def test_json_payload_with_null_true_false_is_parsed(self, setup):
+        """Inbound payloads are JSON: null, true and false must be read."""
+        from event_people import Event
+        body = b'{"id": 42, "deleted_at": null, "active": true, "archived": false}'
+
+        event = Event(name='resource.custom.receive', body=body)
+
+        assert event.body == {'id': 42, 'deleted_at': None, 'active': True, 'archived': False}
+
+    def test_json_envelope_is_unwrapped_to_its_body(self, setup):
+        """A payload built by Event.payload() round-trips to the same body."""
+        from event_people import Event
+        sent = Event(name='resource.custom.receive', body={'id': 42, 'deleted_at': None})
+
+        received = Event(name='resource.custom.receive', body=sent.payload().encode('utf-8'))
+
+        assert received.body == {'id': 42, 'deleted_at': None}
+
+    def test_json_payload_given_as_text_is_parsed(self, setup):
+        from event_people import Event
+
+        event = Event(name='resource.custom.receive', body='{"amount": 35, "paid": true}')
+
+        assert event.body == {'amount': 35, 'paid': True}
+
+    def test_python_literal_payload_is_still_accepted(self, setup):
+        """Payloads written as a Python literal by older emitters keep working."""
+        from event_people import Event
+
+        event = Event(name='resource.custom.receive', body=b"{'amount': 35, 'paid': True}")
+
+        assert event.body == {'amount': 35, 'paid': True}
+
+    def test_unreadable_payload_raises(self, setup):
+        import pytest
+        from event_people import Event
+
+        with pytest.raises((ValueError, SyntaxError)):
+            Event(name='resource.custom.receive', body=b'not a payload {')
