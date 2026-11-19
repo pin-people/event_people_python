@@ -44,12 +44,23 @@ class Event(object):
         if body is None:
             body_dict = None
         elif not isinstance(body, dict):
-            body_dict = ast.literal_eval(body.decode('utf-8'))
+            body_dict = self.__parse_body__(body)
 
         self.header.schema_version = schema_version
 
         self.body = None if body_dict is None else (body_dict if 'body' not in body_dict else body_dict['body'])
         self.retry_count = retry_count
+
+    @staticmethod
+    def __parse_body__(body):
+        """Parse an inbound payload. The contract is a JSON string; payloads
+        written as a Python literal by older emitters are still accepted."""
+        text = body.decode('utf-8') if isinstance(body, (bytes, bytearray)) else body
+
+        try:
+            return json.loads(text)
+        except ValueError:
+            return ast.literal_eval(text)
 
     def increment_retry_count(self):
         self.retry_count += 1
