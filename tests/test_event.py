@@ -115,7 +115,6 @@ class TestEvent:
         assert event.body == {'amount': 35, 'paid': True}
 
     def test_unreadable_payload_raises(self, setup):
-        import pytest
         from event_people import Event
 
         with pytest.raises((ValueError, SyntaxError)):
