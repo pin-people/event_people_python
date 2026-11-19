@@ -1,14 +1,83 @@
 import signal
 import sys
 from unittest.mock import patch, MagicMock
-import pika
 
 class TestDeamon:
 
-    def test_start_deamon(self, setup):
-        with patch('{0}.broker.rabbit_broker.pika.BlockingConnection'.format(setup['basedir']), spec=pika.BlockingConnection):
-            from event_people import Daemon
-            Daemon.start()
+    @staticmethod
+    def _broker_serving(cycles):
+        """Broker double whose connection stays open for `cycles` polls."""
+        broker = MagicMock()
+        polls = []
+
+        def process_data_events(time_limit=None):
+            polls.append(time_limit)
+            if len(polls) >= cycles:
+                broker.connection.is_open = False
+
+        broker.connection.is_open = True
+        broker.connection.process_data_events.side_effect = process_data_events
+
+        return broker, polls
+
+    def test_start_serves_the_connection_until_it_closes(self, setup):
+        """Listeners consume on their own channels, so start() must pump the
+        connection instead of start_consuming() on a single channel."""
+        from event_people import Daemon
+        from event_people.config import Config
+
+        broker, polls = self._broker_serving(cycles=3)
+        original_broker = Config.broker
+        try:
+            Config.broker = broker
+
+            with patch('signal.signal'), \
+                 patch('event_people.daemon.ListenerManager.bind_all_listeners') as bind:
+                Daemon.start()
+        finally:
+            Config.broker = original_broker
+
+        bind.assert_called_once()
+        assert polls == [Daemon.POLL_INTERVAL_SECONDS] * 3
+        broker.get_connection.return_value.start_consuming.assert_not_called()
+
+    def test_start_opens_the_connection_before_binding_listeners(self, setup):
+        from event_people import Daemon
+        from event_people.config import Config
+
+        broker, _ = self._broker_serving(cycles=1)
+        calls = []
+        broker.get_connection.side_effect = lambda: calls.append('connect')
+        original_broker = Config.broker
+        try:
+            Config.broker = broker
+
+            with patch('signal.signal'), \
+                 patch('event_people.daemon.ListenerManager.bind_all_listeners',
+                       side_effect=lambda: calls.append('bind')):
+                Daemon.start()
+        finally:
+            Config.broker = original_broker
+
+        assert calls == ['connect', 'bind']
+
+    def test_start_returns_when_the_connection_is_already_closed(self, setup):
+        from event_people import Daemon
+        from event_people.config import Config
+
+        broker = MagicMock()
+        broker.connection.is_open = False
+        original_broker = Config.broker
+        try:
+            Config.broker = broker
+
+            with patch('signal.signal'), \
+                 patch('event_people.daemon.ListenerManager.bind_all_listeners'):
+                Daemon.start()
+        finally:
+            Config.broker = original_broker
+
+        broker.connection.process_data_events.assert_not_called()
 
     def test_bind_signals_registers_sigterm_and_sigint(self, setup):
         """Daemon.bind_signals must register handlers for SIGTERM and SIGINT."""
