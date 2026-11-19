@@ -21,8 +21,7 @@ class TestDeamon:
         return broker, polls
 
     def test_start_serves_the_connection_until_it_closes(self, setup):
-        """Listeners consume on their own channels, so start() must pump the
-        connection instead of start_consuming() on a single channel."""
+        """Daemon.start must pump the connection, not a single channel."""
         from event_people import Daemon
         from event_people.config import Config
 

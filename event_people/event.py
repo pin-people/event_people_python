@@ -53,8 +53,9 @@ class Event(object):
 
     @staticmethod
     def __parse_body__(body):
-        """Parse an inbound payload. The contract is a JSON string; payloads
-        written as a Python literal by older emitters are still accepted."""
+        """Parse an inbound payload."""
+        # The contract is a JSON string; payloads written as a Python literal
+        # by older emitters are still accepted.
         text = body.decode('utf-8') if isinstance(body, (bytes, bytearray)) else body
 
         try:

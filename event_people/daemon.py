@@ -23,12 +23,10 @@ class Daemon:
 
     @classmethod
     def _consume(cls, broker):
-        """Serve every channel of the broker connection until it closes.
-
-        Each listener consumes on its own channel, so the loop has to run on
-        the connection: start_consuming() on a single channel only dispatches
-        the consumers registered on that channel.
-        """
+        """Serve every channel of the broker connection until it closes."""
+        # Each listener consumes on its own channel, so the loop has to run on
+        # the connection: start_consuming() on a single channel only dispatches
+        # the consumers registered on that channel.
         while broker.connection is not None and broker.connection.is_open:
             broker.connection.process_data_events(time_limit=cls.POLL_INTERVAL_SECONDS)
 
